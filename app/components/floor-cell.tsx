@@ -1,18 +1,18 @@
-import { ReactNode } from "react"
-import { Desk } from "../app-state"
+import { FloorCell } from "../app-state"
+import { useDroppable } from "@dnd-kit/react"
+import DraggableDeskComponent from "./draggable-desk"
+import DraggableStudentComponent from "./draggable-student"
 
-export interface FloorCell {
-    id: string,
-    index: number,
-    row: number,
-    column: number,
-    desk: Desk | null
-    studentId: string | null
-    children?: ReactNode
-}
 
-export default function FloorCellComponent() {
+export default function FloorCellComponent(
+    props: FloorCell
+) {
+    const isDraggable: boolean = props.studentId != null
+    const { ref, isDropTarget } = useDroppable({ id: props.id })
     return (
-        <p>FloorCell</p>
+        <div ref={ref} className="relative box-border">
+            {props.hasDesk && <DraggableDeskComponent id={`desk-${props.id}`} cellId={`${props.id}`} isDropTarget={isDropTarget}></DraggableDeskComponent>}
+            {props.studentId && <DraggableStudentComponent id={`student-${props.id}`} cellId={`${props.id}`} studentId={props.studentId}></DraggableStudentComponent>}
+        </div>
     )
 }

@@ -11,7 +11,7 @@ export default function Dashboard() {
         dispatch({ type: 'ADD_CLASS', payload: { id: uuid(), name } });
     };
     return (
-        <div>
+        <div className="grow flex flex-col">
             <ClassListComponent classes={Object.values(classes)} onAddClass={handleAddClass} />
             {activeClass && <ClassEditor />}
         </div>

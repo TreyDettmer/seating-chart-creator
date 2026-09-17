@@ -1,11 +1,28 @@
-import { createContext, ReactNode, useContext, useReducer } from "react";
+import { createContext, ReactNode, useContext, useEffect, useReducer, useState } from "react";
 import { AppAction, appReducer, AppState, initialAppState, SchoolClass, SeatingConfiguration, Student } from "./app-state"
+import { getItem, setItem } from "./utils/local-storage";
 
 const AppStateContext = createContext<AppState | null>(null);
 const AppDispatchContext = createContext<React.Dispatch<AppAction> | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+
   const [state, dispatch] = useReducer(appReducer, initialAppState);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    const saved = getItem("state");
+    if (saved) {
+      dispatch({ type: "LOAD_STATE", payload: saved });
+    }
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    setItem("state", state);
+  }, [state, isHydrated]);
+
   return (
     <AppStateContext.Provider value={state}>
       <AppDispatchContext.Provider value={dispatch}>
@@ -51,4 +68,9 @@ export function useStudent(studentId: string | null): Student | undefined {
 export function useActiveClass(): SchoolClass | undefined {
   const { classes, activeClassId } = useAppState();
   return activeClassId ? classes[activeClassId] : undefined;
+}
+
+export function useActiveSeatingConfig(): SeatingConfiguration | undefined {
+  const { classes, activeClassId, seatingConfigurations } = useAppState();
+  return activeClassId ? classes[activeClassId].activeConfigurationId ? seatingConfigurations[classes[activeClassId].activeConfigurationId] : undefined : undefined;
 }

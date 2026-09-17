@@ -2,9 +2,12 @@ import { ReactNode } from "react";
 
 
 export type AppAction =
+  | { type: 'LOAD_STATE'; payload: AppState }
   | { type: 'ADD_CLASS'; payload: { id: string; name: string } }
   | { type: 'SET_ACTIVE_CLASS'; payload: { classId: string } }
   | { type: 'ADD_STUDENT'; payload: { classId: string; student: Student } }
+  | { type: 'UPDATE_STUDENT'; payload: { classId: string; student: Student } }
+  | { type: 'IMPORT_STUDENTS'; payload: { classId: string; students: Record<string, Student> } }
   | { type: 'REMOVE_STUDENT'; payload: { classId: string; studentId: string } }
   | {
       type: 'ADD_SEATING_CONFIG';
@@ -31,6 +34,14 @@ export type AppAction =
         cellA: { row: number; col: number };
         cellB: { row: number; col: number };
       };
+    }
+  | {
+      type: 'SWAP_DESKS';
+      payload: {
+        configId: string;
+        cellA: { row: number; col: number };
+        cellB: { row: number; col: number };
+      };
     };
 
 
@@ -43,12 +54,23 @@ export interface Student {
     dislikeIds : string[]
 }
 
+export interface StudentCsvRow {
+    FirstName: string;
+    LastName: string;
+    Gender : number;
+    LikeIds : string
+    DislikeIds : string
+}
+
 export interface SchoolClass {
   id: string;
   name: string;
   studentIds: string[];
   seatingConfigurationIds: string[];
   activeConfigurationId: string | null;
+  selectedStudentId: string | null;
+  keepApartGroups: string[][];
+  keepTogetherGroups: string[][]; 
 }
 
 export interface AppState {
@@ -63,14 +85,6 @@ export const initialAppState: AppState = {
   seatingConfigurations: {},
   activeClassId: null,
 };
-// Each class has its own ClassState
-export interface ClassState {
-  students : Student[],
-  floorRowCount : number,
-  floorColCount : number,
-  seatingCharts : SeatingConfiguration[],
-  selectedSeatingChartIndex : number,
-}
 
 // A class can have multiple SeatingChartStates, each representing a different layout of desks
 export interface SeatingConfiguration {
@@ -84,25 +98,22 @@ export interface SeatingConfiguration {
   updatedAt: string;
 }
 
-export interface Desk {
-  id: string;
-  allowsStudent? : boolean
-  isDropTarget? :boolean
-}
-
 export interface FloorCell {
     id: string,
     index: number,
     row: number,
     column: number,
-    desk: Desk | null
+    hasDesk: boolean,
+    allowsStudents: boolean,
     studentId: string | null
-    children?: ReactNode
 }
 
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
+    case 'LOAD_STATE': {
+      return action.payload
+    }
     case 'ADD_CLASS': {
       const { id, name } = action.payload;
       return {
@@ -115,6 +126,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             studentIds: [],
             seatingConfigurationIds: [],
             activeConfigurationId: null,
+            selectedStudentId: null,
+            keepApartGroups: [],
+            keepTogetherGroups: []
           },
         },
         activeClassId: state.activeClassId ?? id,
@@ -134,6 +148,32 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         classes: {
           ...state.classes,
           [classId]: { ...cls, studentIds: [...cls.studentIds, student.id] },
+        },
+      };
+    }
+
+    case 'UPDATE_STUDENT': {
+      const { classId, student } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      var updatedStudents = state.students
+      updatedStudents[student.id] = student
+      return {
+        ...state,
+        students: updatedStudents,
+      };
+    }
+
+    case 'IMPORT_STUDENTS': {
+      const { classId, students } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      return {
+        ...state,
+        students: { ...state.students, ...students},
+        classes: {
+          ...state.classes,
+          [classId]: { ...cls, studentIds: Object.keys(students) },
         },
       };
     }
@@ -226,6 +266,26 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const b = newGrid[cellB.row][cellB.col];
       newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId };
       newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId };
+
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: { ...config, grid: newGrid },
+        },
+      };
+    }
+
+    case 'SWAP_DESKS': {
+      const { configId, cellA, cellB } = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+
+      const newGrid = config.grid.map((r) => r.slice());
+      const a = newGrid[cellA.row][cellA.col];
+      const b = newGrid[cellB.row][cellB.col];
+      newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents};
+      newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents };
 
       return {
         ...state,

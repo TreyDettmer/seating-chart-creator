@@ -1,12 +1,13 @@
 import { useActiveClass } from "../app-context";
 import ClassStudentList from "./class-student-list";
+import SeatingConfigEditor from "./seating-config-editor";
 
 export default function ClassEditor() {
     const activeClass = useActiveClass();
     return (
-        <div>
+        <div className="flex flex-row grow bg-gray-50">
             <ClassStudentList></ClassStudentList>
-            <p>Viewing {activeClass?.name}</p>
+            <SeatingConfigEditor></SeatingConfigEditor>
         </div>
     )
 }
