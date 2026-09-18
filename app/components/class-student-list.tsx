@@ -64,25 +64,25 @@ export default function ClassStudentList() {
 
     return (
         <div>
-            <table className="table-auto border-spacing-1 mb-3">
+            <table className="table-auto border-spacing-1 mb-3 student-list-table">
                 <thead>
                     <tr>
-                        <th className="border p-1">First Name</th>
-                        <th className="border p-1">Last Name</th>
-                        <th className="border p-1">Gender</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Gender</th>
                     </tr>
                 </thead>
                 <tbody>
                     {students.map(student => {
                         return (
-                            <tr key={student.id} className="p-20 m-20">
-                                <td className="border p-1">
+                            <tr key={student.id}>
+                                <td>
                                     <input value={student.firstName} onChange={e => onStudentUpdated({ ...student, firstName: e.target.value })}></input>
                                 </td>
-                                <td className="border p-1">
+                                <td>
                                     <input value={student.lastName} onChange={e => onStudentUpdated({ ...student, lastName: e.target.value })}></input>
                                 </td>
-                                <td className="border p-1">
+                                <td>
                                     <input type="number" value={student.gender} onChange={e => onStudentUpdated({ ...student, gender: !isNaN(parseInt(e.target.value)) ? parseInt(e.target.value) : 0 })}></input>
                                 </td>
                             </tr>
@@ -91,9 +91,9 @@ export default function ClassStudentList() {
                 </tbody>
             </table>
 
-            <label htmlFor="importStudentsUpload" className="p-2 rounded-xs border border-black">
+            <label htmlFor="importStudentsUpload" className="default-button">
                 <input className="hidden" id="importStudentsUpload" type="file" onChange={onImportStudentsFileUploaded} />
-                Import Students:
+                Import Students
             </label>
         </div>
     )

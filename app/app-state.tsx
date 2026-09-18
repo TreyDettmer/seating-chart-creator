@@ -13,6 +13,13 @@ export type AppAction =
       type: 'ADD_SEATING_CONFIG';
       payload: { classId: string; config: SeatingConfiguration };
     }
+  | { type: 'REMOVE_SEATING_CONFIG'; payload: { classId: string; configId: string };}
+  | { type: 'ADD_KEEP_APART_GROUP'; payload: { classId: string; group : KeepApartGroup}}
+  | { type: 'REMOVE_KEEP_APART_GROUP'; payload: { classId: string; groupId : string}}
+  | { type: 'EDIT_KEEP_APART_GROUP'; payload: { classId: string; groupId : string; group : KeepApartGroup}}
+  | { type: 'ADD_KEEP_TOGETHER_GROUP'; payload: { classId: string; group : KeepTogetherGroup}}
+  | { type: 'REMOVE_KEEP_TOGETHER_GROUP'; payload: { classId: string; groupId : string}}
+  | { type: 'EDIT_KEEP_TOGETHER_GROUP'; payload: { classId: string; groupId : string; group : KeepTogetherGroup}}
   | { type: 'SET_ACTIVE_CONFIG'; payload: { classId: string; configId: string } }
   | {
       type: 'ASSIGN_STUDENT_TO_CELL';
@@ -62,6 +69,18 @@ export interface StudentCsvRow {
     DislikeIds : string
 }
 
+export interface KeepApartGroup {
+  id : string,
+  studentIds : string[],
+  useAnd : boolean
+}
+
+export interface KeepTogetherGroup {
+  id : string,
+  studentIds : string[],
+  useAnd : boolean
+}
+
 export interface SchoolClass {
   id: string;
   name: string;
@@ -69,14 +88,16 @@ export interface SchoolClass {
   seatingConfigurationIds: string[];
   activeConfigurationId: string | null;
   selectedStudentId: string | null;
-  keepApartGroups: string[][];
-  keepTogetherGroups: string[][]; 
+  keepApartGroupIds: string[];
+  keepTogetherGroupIds: string[];
 }
 
 export interface AppState {
   students: Record<string, Student>;
   classes: Record<string, SchoolClass>;
   seatingConfigurations: Record<string, SeatingConfiguration>;
+  keepApartGroups: Record<string, KeepApartGroup>;
+  keepTogetherGroups: Record<string, KeepTogetherGroup>;
   activeClassId: string | null;
 }
 export const initialAppState: AppState = {
@@ -84,6 +105,8 @@ export const initialAppState: AppState = {
   classes: {},
   seatingConfigurations: {},
   activeClassId: null,
+  keepApartGroups: {},
+  keepTogetherGroups: {}
 };
 
 // A class can have multiple SeatingChartStates, each representing a different layout of desks
@@ -127,8 +150,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             seatingConfigurationIds: [],
             activeConfigurationId: null,
             selectedStudentId: null,
-            keepApartGroups: [],
-            keepTogetherGroups: []
+            keepApartGroupIds: [],
+            keepTogetherGroupIds: []
           },
         },
         activeClassId: state.activeClassId ?? id,
@@ -213,6 +236,138 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             seatingConfigurationIds: [...cls.seatingConfigurationIds, config.id],
             activeConfigurationId: cls.activeConfigurationId ?? config.id,
           },
+        },
+      };
+    }
+
+    case 'REMOVE_SEATING_CONFIG': {
+      const { classId, configId } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      var otherConfigIds = cls.seatingConfigurationIds.filter(x => x != configId)
+      const { [configId]: _removedConfig, ...remainingSeatingConfigurations } = state.seatingConfigurations;
+      return {
+        ...state,
+        seatingConfigurations: remainingSeatingConfigurations,
+        classes: {
+          ...state.classes,
+          [classId]: { 
+            ...cls,
+            seatingConfigurationIds: otherConfigIds, 
+            activeConfigurationId: otherConfigIds.length > 0 ? otherConfigIds[0] : null },
+            
+        },
+      };
+    }
+
+    case 'ADD_KEEP_APART_GROUP': {
+      const { classId, group } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      return {
+        ...state,
+        keepApartGroups: {
+          ...state.keepApartGroups,
+          [group.id]: group
+        },
+        classes: {
+          ...state.classes,
+          [classId]: { 
+            ...cls,
+            keepApartGroupIds: [
+              ...cls.keepApartGroupIds,
+              group.id
+            ]
+          }
+        },
+      };
+    }
+
+    case 'EDIT_KEEP_APART_GROUP': {
+      const { classId, groupId, group } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      
+      return {
+        ...state,
+        keepApartGroups: {
+          ...state.keepApartGroups,
+          [groupId]: group,
+        },
+      };
+    }
+
+    case 'REMOVE_KEEP_APART_GROUP': {
+      const { classId, groupId } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      var otherGroupIds = cls.keepApartGroupIds.filter(x => x != groupId)
+      const { [groupId]: _removedGroup, ...remainingKeepApartGroups } = state.keepApartGroups;
+      return {
+        ...state,
+        keepApartGroups: remainingKeepApartGroups,
+        classes: {
+          ...state.classes,
+          [classId]: { 
+            ...cls,
+            keepApartGroupIds: otherGroupIds
+          }
+        },
+      };
+    }
+
+    case 'ADD_KEEP_TOGETHER_GROUP': {
+      const { classId, group } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      return {
+        ...state,
+        keepTogetherGroups: {
+          ...state.keepTogetherGroups,
+          [group.id]: group
+        },
+        classes: {
+          ...state.classes,
+          [classId]: { 
+            ...cls,
+            keepTogetherGroupIds: [
+              ...cls.keepTogetherGroupIds,
+              group.id
+            ]
+          }
+        },
+      };
+    }
+
+    case 'EDIT_KEEP_TOGETHER_GROUP': {
+      const { classId, groupId, group } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      
+      return {
+        ...state,
+        keepTogetherGroups: {
+          ...state.keepTogetherGroups,
+          [groupId]: group,
+        },
+      };
+    }
+
+    case 'REMOVE_KEEP_TOGETHER_GROUP': {
+      const { classId, groupId } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      var otherGroupIds = cls.keepTogetherGroupIds.filter(x => x != groupId)
+      const { [groupId]: _removedGroup, ...remainingKeepTogetherGroups } = state.keepTogetherGroups;
+      return {
+        ...state,
+        keepTogetherGroups: remainingKeepTogetherGroups,
+        classes: {
+          ...state.classes,
+          [classId]: { 
+            ...cls,
+            keepTogetherGroupIds: otherGroupIds
+          }
         },
       };
     }

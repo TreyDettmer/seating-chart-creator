@@ -1,6 +1,6 @@
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
 import { FloorCell, SeatingConfiguration } from "../app-state";
-import { v4 as uuid } from 'uuid'
+
 import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
@@ -20,53 +20,6 @@ export default function SeatingConfigEditor() {
     const activeConfigurationId = activeClass.activeConfigurationId
     const activeConfig = useActiveSeatingConfig()
 
-
-    function onCreateSeatingConfig() {
-        if (activeClass == undefined) {
-            return
-        }
-
-        var grid: FloorCell[][] = []
-        var rows = 10
-        var cols = 10
-        for (let y = 0; y < rows; y++) {
-            var row: FloorCell[] = []
-            for (let x = 0; x < cols; x++) {
-                row.push({
-                    id: `${uuid()}`,
-                    index: y + x,
-                    row: y,
-                    column: x,
-                    hasDesk: (x + y) % 2 == 0 ? false : true,
-                    allowsStudents: true,
-                    studentId: (x + y) % 2 == 0 ? null : uuid()
-                })
-            }
-            grid.push(row)
-        }
-        var newConfig: SeatingConfiguration = {
-            id: `${seatingConfigs.length + 1}`,
-            classId: activeClass.id,
-            name: `Config ${seatingConfigs.length + 1}`,
-            rows: rows,
-            cols: cols,
-            grid: grid,
-            createdAt: Date.toString(),
-            updatedAt: Date.toString()
-        }
-
-        dispatch({ type: 'ADD_SEATING_CONFIG', payload: { classId: activeClass.id, config: newConfig } });
-    }
-
-    function onSwitchSeatingConfig(configId: string) {
-        if (configId === activeConfigurationId) {
-            return
-        }
-        if (activeClass == undefined) {
-            return
-        }
-        dispatch({ type: 'SET_ACTIVE_CONFIG', payload: { classId: activeClass.id, configId: configId } });
-    }
 
     function onDragEnd(event: DragEndEvent) {
         if (event.canceled) {
@@ -129,38 +82,65 @@ export default function SeatingConfigEditor() {
         }
     }
 
+    function onRandomlyAssignStudentsClicked() {
+        if (activeConfig === undefined || activeClass === undefined) {
+            return
+        }
+        // Get number of available desks
+        var numberOfAvailableDesks = 0
+        for (let rowIndex = 0; rowIndex < activeConfig.rows; rowIndex++) {
+            for (let colIndex = 0; colIndex < activeConfig.cols; colIndex++) {
+                if (activeConfig.grid[rowIndex][colIndex].hasDesk && activeConfig.grid[rowIndex][colIndex].allowsStudents) {
+                    numberOfAvailableDesks++
+                }
+            }
+        }
+        if (activeClass.studentIds.length > numberOfAvailableDesks) {
+            console.log("Not enough desks")
+            return
+        }
+        
+
+    }
+
     return (
         <div className="flex flex-col grow border-l">
-            <div id="config-list-container" className="flex flex-row bg-blue-500 h-8">
-                <SeatingConfigList seatingConfigs={seatingConfigs} activeConfigurationId={activeConfigurationId} onCreateSeatingConfig={onCreateSeatingConfig} onSwitchSeatingConfig={onSwitchSeatingConfig}></SeatingConfigList>
+            <div id="config-list-container" className="flex flex-row bg-blue-500 h-[40px]">
+                <SeatingConfigList></SeatingConfigList>
             </div>
-            <div id="configEditor" className="flex flex-row bg-green-300">
-                <DragDropProvider
-                    onDragStart={() => { }}
-                    onDragMove={() => { }}
-                    onDragOver={() => { }}
-                    onDragEnd={onDragEnd}>
-                    <div id="grid-container" className="bg-white flex justify-center items-center w-[min(50dvw,1000px)]">
-                        {activeConfig ? (
 
-                            <div id="grid" className={`w-[90%] aspect-square grid`}
-                                style={{
-                                    gridTemplateColumns: `repeat(${activeConfig.cols}, minmax(0, 1fr))`,
-                                    gridTemplateRows: `repeat(${activeConfig.rows}, minmax(0, 1fr))`,
-                                }}
-                            >
-                                {activeConfig.grid.map(row => {
-                                    return row.map(cell => {
-                                        return <FloorCellComponent key={cell.id} {...cell}></FloorCellComponent>
-                                    })
-                                })}
-                            </div>) : (null)}
+            <div id="configEditor" className="flex flex-row bg-green-300 grow h-full w-full">
+                <div id="temp-container" className="h-full">
+                    <DragDropProvider
+                        onDragStart={() => { }}
+                        onDragMove={() => { }}
+                        onDragOver={() => { }}
+                        onDragEnd={onDragEnd}>
+                        <div id="grid-container" className="relative w-[800px] h-[800px] overflow-scroll">
+                            {activeConfig ? (
 
+                                <div id="grid" className="w-[800px] h-[800px] aspect-square grid absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                                    style={{
+                                        gridTemplateColumns: `repeat(${activeConfig.cols}, minmax(0, 1fr))`,
+                                        gridTemplateRows: `repeat(${activeConfig.rows}, minmax(0, 1fr))`,
+                                    }}
+                                >
+                                    {activeConfig.grid.map(row => {
+                                        return row.map(cell => {
+                                            return <FloorCellComponent key={cell.id} {...cell}></FloorCellComponent>
+                                        })
+                                    })}
+                                </div>) : (null)}
+                        </div>
+                    </DragDropProvider>
+                    <div id="shuffle-options" className="bg-yellow-300 h-[150px]">
+                        <button onClick={onRandomlyAssignStudentsClicked} className="default-button">Randomly Assign Students</button>
+                        <button className="default-button">Trey</button>
                     </div>
+                </div>
 
-                </DragDropProvider>
-                <div id="cell-editor" className="bg-purple-400">
-
+                <div id="cell-editor" className="bg-purple-400 w-full">
+                    
                 </div>
             </div>
         </div>
