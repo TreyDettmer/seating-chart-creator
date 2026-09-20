@@ -1,23 +1,53 @@
 import { useDraggable } from "@dnd-kit/react"
 import { MouseEvent } from "react";
+import { useActiveClass, useActiveSeatingConfig, useAppDispatch } from "../app-context";
 
 export interface DraggableDeskProps {
     id : string,
     cellId : string | null,
+    cellRow : number,
+    cellCol : number,
     isDropTarget : boolean,
 }
 
 export default function DraggableDeskComponent(
     props : DraggableDeskProps
 ) {
-
+    const dispatch = useAppDispatch();
+    const activeConfig = useActiveSeatingConfig();
+    if (activeConfig === undefined) {
+        return null;
+    }
     const { ref, isDragging } = useDraggable({ id: props.id })
 
     function onClick(event : MouseEvent<HTMLButtonElement>) {
         event.stopPropagation()
+    if (activeConfig === undefined) {
+        return null;
     }
+        dispatch({ type: 'TOGGLE_SELECTED_CELL', payload: { configId: activeConfig.id, cell: {row: props.cellRow, col: props.cellCol} } });
+    }
+
+    const className = () : string => {
+        var name = 'desk'
+        if (activeConfig === undefined) {
+            return name;
+        }
+        if (isDragging) {
+            name += ' desk-dragging'
+        }
+        if (props.isDropTarget && !isDragging) {
+            name += ' desk-drop-target'
+        }
+        if (activeConfig.selectedCell != null && activeConfig.selectedCell.col == props.cellCol && activeConfig.selectedCell.row == props.cellRow) {
+            name += ' desk-selected'
+        }
+
+        return name
+    }
+
     return (
-        <button ref={ref} className={`${props.isDropTarget ? " bg-orange-400" : "bg-orange-300"} box-border border border-[rgb(94,93,93)] rounded-sm absolute p-px w-[95%] h-[95%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`}>
+        <button onClick={onClick} ref={ref} className={className()}>
                 
         </button>
     )

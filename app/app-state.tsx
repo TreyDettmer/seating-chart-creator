@@ -1,6 +1,21 @@
 import { ReactNode } from "react";
+import { components } from 'react-select';
 
+export const CustomOption = (props: any) => {
+  return (
+    <components.Option
+      {...props}
+      className={`selectable-option`}
+    >
+      {props.children}
+    </components.Option>
+  );
+};
 
+export interface SelectOption {
+  value: string;
+  label: string;
+}
 export type AppAction =
   | { type: 'LOAD_STATE'; payload: AppState }
   | { type: 'ADD_CLASS'; payload: { id: string; name: string } }
@@ -9,76 +24,83 @@ export type AppAction =
   | { type: 'UPDATE_STUDENT'; payload: { classId: string; student: Student } }
   | { type: 'IMPORT_STUDENTS'; payload: { classId: string; students: Record<string, Student> } }
   | { type: 'REMOVE_STUDENT'; payload: { classId: string; studentId: string } }
-  | {
-      type: 'ADD_SEATING_CONFIG';
-      payload: { classId: string; config: SeatingConfiguration };
-    }
-  | { type: 'REMOVE_SEATING_CONFIG'; payload: { classId: string; configId: string };}
-  | { type: 'ADD_KEEP_APART_GROUP'; payload: { classId: string; group : KeepApartGroup}}
-  | { type: 'REMOVE_KEEP_APART_GROUP'; payload: { classId: string; groupId : string}}
-  | { type: 'EDIT_KEEP_APART_GROUP'; payload: { classId: string; groupId : string; group : KeepApartGroup}}
-  | { type: 'ADD_KEEP_TOGETHER_GROUP'; payload: { classId: string; group : KeepTogetherGroup}}
-  | { type: 'REMOVE_KEEP_TOGETHER_GROUP'; payload: { classId: string; groupId : string}}
-  | { type: 'EDIT_KEEP_TOGETHER_GROUP'; payload: { classId: string; groupId : string; group : KeepTogetherGroup}}
+  | { type: 'TOGGLE_SELECTED_CELL'; payload: { configId: string; cell: { row: number, col: number } | null } }
+  | { type: 'ADD_SEATING_CONFIG'; payload: { classId: string; config: SeatingConfiguration }; }
+  | { type: 'REMOVE_SEATING_CONFIG'; payload: { classId: string; configId: string }; }
+  | { type: 'ADD_KEEP_APART_GROUP'; payload: { classId: string; group: KeepApartGroup } }
+  | { type: 'REMOVE_KEEP_APART_GROUP'; payload: { classId: string; groupId: string } }
+  | { type: 'EDIT_KEEP_APART_GROUP'; payload: { classId: string; groupId: string; group: KeepApartGroup } }
+  | { type: 'ADD_KEEP_TOGETHER_GROUP'; payload: { classId: string; group: KeepTogetherGroup } }
+  | { type: 'REMOVE_KEEP_TOGETHER_GROUP'; payload: { classId: string; groupId: string } }
+  | { type: 'EDIT_KEEP_TOGETHER_GROUP'; payload: { classId: string; groupId: string; group: KeepTogetherGroup } }
   | { type: 'SET_ACTIVE_CONFIG'; payload: { classId: string; configId: string } }
   | {
-      type: 'ASSIGN_STUDENT_TO_CELL';
-      payload: {
-        configId: string;
-        row: number;
-        col: number;
-        studentId: string | null;
-      };
-    }
-  | {
-      type: 'SET_CELL_TYPE';
-      payload: { configId: string; row: number; col: number; cellType: string };
-    }
-  | {
-      type: 'SWAP_STUDENTS';
-      payload: {
-        configId: string;
-        cellA: { row: number; col: number };
-        cellB: { row: number; col: number };
-      };
-    }
-  | {
-      type: 'SWAP_DESKS';
-      payload: {
-        configId: string;
-        cellA: { row: number; col: number };
-        cellB: { row: number; col: number };
-      };
+    type: 'ASSIGN_STUDENT_TO_CELL';
+    payload: {
+      configId: string;
+      row: number;
+      col: number;
+      studentId: string | null;
     };
-
+  }
+  | {
+    type: 'SET_CELL_TYPE';
+    payload: { configId: string; row: number; col: number; cellType: string };
+  }
+  | {
+    type: 'SWAP_STUDENTS';
+    payload: {
+      configId: string;
+      cellA: { row: number; col: number };
+      cellB: { row: number; col: number };
+    };
+  }
+  | {
+    type: 'SWAP_DESKS';
+    payload: {
+      configId: string;
+      cellA: { row: number; col: number };
+      cellB: { row: number; col: number };
+    };
+  }
+  | { type: 'CREATE_DESK_TAG'; payload: { configId: string; row: number; col: number; deskTag: DeskTag } }
+  | { type: 'DELETE_DESK_TAG'; payload: { tagId: string } }
+  | { type: 'TOGGLE_CELL_ALLOWS_STUDENTS'; payload: { configId: string; row: number; col: number; allowsStudents: boolean } }
+  | { type: 'ADD_DESK_TAG_TO_CELL'; payload: { tagId: string; configId: string; row: number; col: number; } }
+  | { type: 'EDIT_CELL_ASSIGNED_DESK_TAGS'; payload: { tagIds: string[]; configId: string; row: number; col: number; } }
+  | { type: 'EDIT_STUDENTS_ASSIGNED_TO_DESK_TAG'; payload: { tagId: string; studentIds: string[] } }
+  | { type: 'REMOVE_DESK_TAG_FROM_CELL'; payload: { tagId: string; configId: string; row: number; col: number; } }
+  | { type: 'ADD_DESK_TAG_TO_STUDENT'; payload: { tagId: string; classId: string; student: Student } }
+  | { type: 'REMOVE_DESK_TAG_FROM_STUDENT'; payload: { tagId: string; classId: string; student: Student } }
 
 export interface Student {
-    id: string;
-    firstName: string;
-    lastName: string;
-    gender : number;
-    likeIds : string[]
-    dislikeIds : string[]
+  id: string;
+  firstName: string;
+  lastName: string;
+  gender: number;
+  likeIds: string[];
+  dislikeIds: string[];
+  deskTagIds: string[];
 }
 
 export interface StudentCsvRow {
-    FirstName: string;
-    LastName: string;
-    Gender : number;
-    LikeIds : string
-    DislikeIds : string
+  FirstName: string;
+  LastName: string;
+  Gender: number;
+  LikeIds: string
+  DislikeIds: string
 }
 
 export interface KeepApartGroup {
-  id : string,
-  studentIds : string[],
-  useAnd : boolean
+  id: string,
+  studentIds: string[],
+  useAnd: boolean
 }
 
 export interface KeepTogetherGroup {
-  id : string,
-  studentIds : string[],
-  useAnd : boolean
+  id: string,
+  studentIds: string[],
+  useAnd: boolean
 }
 
 export interface SchoolClass {
@@ -92,21 +114,28 @@ export interface SchoolClass {
   keepTogetherGroupIds: string[];
 }
 
+export interface DeskTag {
+  id: string;
+  name: string;
+}
+
 export interface AppState {
   students: Record<string, Student>;
   classes: Record<string, SchoolClass>;
   seatingConfigurations: Record<string, SeatingConfiguration>;
   keepApartGroups: Record<string, KeepApartGroup>;
   keepTogetherGroups: Record<string, KeepTogetherGroup>;
+  deskTags: Record<string, DeskTag>;
   activeClassId: string | null;
 }
 export const initialAppState: AppState = {
   students: {},
   classes: {},
   seatingConfigurations: {},
-  activeClassId: null,
   keepApartGroups: {},
-  keepTogetherGroups: {}
+  keepTogetherGroups: {},
+  deskTags: {},
+  activeClassId: null
 };
 
 // A class can have multiple SeatingChartStates, each representing a different layout of desks
@@ -117,18 +146,20 @@ export interface SeatingConfiguration {
   rows: number;
   cols: number;
   grid: FloorCell[][];
+  selectedCell: { row: number, col: number } | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface FloorCell {
-    id: string,
-    index: number,
-    row: number,
-    column: number,
-    hasDesk: boolean,
-    allowsStudents: boolean,
-    studentId: string | null
+  id: string,
+  index: number,
+  row: number,
+  column: number,
+  hasDesk: boolean,
+  allowsStudents: boolean,
+  studentId: string | null
+  deskTagIds: string[]
 }
 
 
@@ -193,7 +224,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       if (!cls) return state;
       return {
         ...state,
-        students: { ...state.students, ...students},
+        students: { ...state.students, ...students },
         classes: {
           ...state.classes,
           [classId]: { ...cls, studentIds: Object.keys(students) },
@@ -214,6 +245,22 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           [classId]: {
             ...cls,
             studentIds: cls.studentIds.filter((id) => id !== studentId),
+          },
+        },
+      };
+    }
+
+    case 'TOGGLE_SELECTED_CELL': {
+      const { configId, cell } = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [config.id]: {
+            ...config,
+            selectedCell: cell
           },
         },
       };
@@ -251,11 +298,12 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         seatingConfigurations: remainingSeatingConfigurations,
         classes: {
           ...state.classes,
-          [classId]: { 
+          [classId]: {
             ...cls,
-            seatingConfigurationIds: otherConfigIds, 
-            activeConfigurationId: otherConfigIds.length > 0 ? otherConfigIds[0] : null },
-            
+            seatingConfigurationIds: otherConfigIds,
+            activeConfigurationId: otherConfigIds.length > 0 ? otherConfigIds[0] : null
+          },
+
         },
       };
     }
@@ -272,7 +320,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         },
         classes: {
           ...state.classes,
-          [classId]: { 
+          [classId]: {
             ...cls,
             keepApartGroupIds: [
               ...cls.keepApartGroupIds,
@@ -287,7 +335,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { classId, groupId, group } = action.payload;
       const cls = state.classes[classId];
       if (!cls) return state;
-      
+
       return {
         ...state,
         keepApartGroups: {
@@ -308,7 +356,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         keepApartGroups: remainingKeepApartGroups,
         classes: {
           ...state.classes,
-          [classId]: { 
+          [classId]: {
             ...cls,
             keepApartGroupIds: otherGroupIds
           }
@@ -328,7 +376,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         },
         classes: {
           ...state.classes,
-          [classId]: { 
+          [classId]: {
             ...cls,
             keepTogetherGroupIds: [
               ...cls.keepTogetherGroupIds,
@@ -343,7 +391,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { classId, groupId, group } = action.payload;
       const cls = state.classes[classId];
       if (!cls) return state;
-      
+
       return {
         ...state,
         keepTogetherGroups: {
@@ -364,7 +412,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         keepTogetherGroups: remainingKeepTogetherGroups,
         classes: {
           ...state.classes,
-          [classId]: { 
+          [classId]: {
             ...cls,
             keepTogetherGroupIds: otherGroupIds
           }
@@ -409,7 +457,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    
+
 
     case 'SWAP_STUDENTS': {
       const { configId, cellA, cellB } = action.payload;
@@ -435,19 +483,241 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { configId, cellA, cellB } = action.payload;
       const config = state.seatingConfigurations[configId];
       if (!config) return state;
+      if (state.activeClassId == null) return state;
+      const cls = state.classes[state.activeClassId];
+      var selectedCell = config.selectedCell;
+      if (selectedCell != null) {
+        if (selectedCell.col === cellA.col && selectedCell.row === cellA.row) {
+          selectedCell = { row: cellB.row, col: cellB.col }
+        } else if (selectedCell.col === cellB.col && selectedCell.row === cellB.row) {
+          selectedCell = { row: cellA.row, col: cellA.col }
+        }
+      }
 
       const newGrid = config.grid.map((r) => r.slice());
       const a = newGrid[cellA.row][cellA.col];
       const b = newGrid[cellB.row][cellB.col];
-      newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents};
+      newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents };
       newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents };
 
       return {
         ...state,
         seatingConfigurations: {
           ...state.seatingConfigurations,
+          [configId]: {
+            ...config,
+            grid: newGrid,
+            selectedCell: selectedCell
+          },
+        },
+      };
+    }
+
+    case 'CREATE_DESK_TAG': {
+      const { deskTag, configId, row, col } = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+
+      const newGrid = config.grid.slice();
+      const newRow = newGrid[row].slice();
+      newRow[col] = {
+        ...newRow[col],
+        deskTagIds: [
+          ...newRow[col].deskTagIds,
+          deskTag.id
+        ]
+      };
+      newGrid[row] = newRow;
+      return {
+        ...state,
+        deskTags: {
+          ...state.deskTags,
+          [deskTag.id]: deskTag
+        },
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
           [configId]: { ...config, grid: newGrid },
         },
+      };
+    }
+
+    case 'DELETE_DESK_TAG': {
+      const { tagId } = action.payload;
+      const { [tagId]: _removedTag, ...remainingDeskTags } = state.deskTags;
+
+      const updatedStudents = Object.fromEntries(
+        Object.entries(state.students).map(([studentId, student]) => [
+          studentId,
+          {
+            ...student,
+            deskTagIds: student.deskTagIds.filter((id) => id !== tagId),
+          },
+        ])
+      );
+
+      const updatedSeatingConfigs = Object.fromEntries(
+        Object.entries(state.seatingConfigurations).map(([configId, config]) => [
+          configId,
+          {
+            ...config,
+            grid: config.grid.map((row) =>
+              row.map((cell) => ({
+                ...cell,
+                deskTagIds: cell.deskTagIds.filter((id) => id !== tagId),
+              }))
+            ),
+          },
+        ])
+      );
+
+      return {
+        ...state,
+        students: updatedStudents,
+        deskTags: remainingDeskTags,
+        seatingConfigurations: updatedSeatingConfigs,
+      };
+    }
+
+    case 'TOGGLE_CELL_ALLOWS_STUDENTS': {
+      const { configId, row, col, allowsStudents } = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+      const newGrid = config.grid.slice();
+      const newRow = newGrid[row].slice();
+      newRow[col] = {
+        ...newRow[col],
+        allowsStudents: allowsStudents
+      };
+      newGrid[row] = newRow;
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: { ...config, grid: newGrid },
+        },
+      };
+    }
+
+    case 'ADD_DESK_TAG_TO_CELL': {
+      const { tagId, configId, row, col } = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+      const newGrid = config.grid.slice();
+      const newRow = newGrid[row].slice();
+      newRow[col] = {
+        ...newRow[col],
+        deskTagIds: [
+          ...newRow[col].deskTagIds,
+          tagId
+        ]
+      };
+      newGrid[row] = newRow;
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: { ...config, grid: newGrid },
+        },
+      };
+    }
+
+
+    case 'EDIT_CELL_ASSIGNED_DESK_TAGS': {
+      const { tagIds, configId, row, col } = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+      const newGrid = config.grid.slice();
+      const newRow = newGrid[row].slice();
+      newRow[col] = {
+        ...newRow[col],
+        deskTagIds: tagIds
+      };
+      newGrid[row] = newRow;
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: { ...config, grid: newGrid },
+        },
+      };
+    }
+
+    case 'REMOVE_DESK_TAG_FROM_CELL': {
+      const { tagId, configId, row, col } = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+      const newGrid = config.grid.slice();
+      const newRow = newGrid[row].slice();
+      newRow[col] = {
+        ...newRow[col],
+        deskTagIds: newRow[col].deskTagIds.filter(x => x != tagId)
+      };
+      newGrid[row] = newRow;
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: { ...config, grid: newGrid },
+        },
+      };
+    }
+    case 'ADD_DESK_TAG_TO_STUDENT': {
+      const { tagId, classId, student } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      var updatedStudents = state.students
+      updatedStudents[student.id] = {
+        ...student,
+        deskTagIds: [
+          ...student.deskTagIds,
+          tagId
+        ]
+      }
+      return {
+        ...state,
+        students: updatedStudents,
+      };
+    }
+    case 'REMOVE_DESK_TAG_FROM_STUDENT': {
+      const { tagId, classId, student } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      var updatedStudents = state.students
+      updatedStudents[student.id] = {
+        ...student,
+        deskTagIds: student.deskTagIds.filter(x => x != tagId)
+      }
+      return {
+        ...state,
+        students: updatedStudents,
+      };
+    }
+    case 'EDIT_STUDENTS_ASSIGNED_TO_DESK_TAG': {
+      const { tagId, studentIds } = action.payload;
+      const selectedStudentIds = new Set(studentIds);
+
+      const updatedStudents = Object.fromEntries(
+        Object.entries(state.students).map(([studentId, student]) => {
+          const hasTag = student.deskTagIds.includes(tagId);
+          const shouldHaveTag = selectedStudentIds.has(studentId);
+
+          return [
+            studentId,
+            {
+              ...student,
+              deskTagIds: shouldHaveTag
+                ? hasTag
+                  ? student.deskTagIds
+                  : [...student.deskTagIds, tagId]
+                : student.deskTagIds.filter((id) => id !== tagId),
+            },
+          ];
+        })
+      );
+
+      return {
+        ...state,
+        students: updatedStudents,
       };
     }
 

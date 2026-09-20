@@ -51,7 +51,8 @@ export default function SeatingConfigList(
                     column: x,
                     hasDesk: i < activeClass.studentIds.length ? true : false,
                     allowsStudents: true,
-                    studentId: i < activeClass.studentIds.length ? activeClass.studentIds[i] : null
+                    studentId: i < activeClass.studentIds.length ? activeClass.studentIds[i] : null,
+                    deskTagIds: []
                 })
                 i++;
             }
@@ -64,6 +65,7 @@ export default function SeatingConfigList(
             rows: rows,
             cols: cols,
             grid: grid,
+            selectedCell: null,
             createdAt: Date.toString(),
             updatedAt: Date.toString()
         }

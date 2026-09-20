@@ -4,6 +4,7 @@ import { FloorCell, SeatingConfiguration } from "../app-state";
 import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
+import DeskEditor from "./desk-editor";
 
 export default function SeatingConfigEditor() {
     const activeClass = useActiveClass();
@@ -134,14 +135,11 @@ export default function SeatingConfigEditor() {
                         </div>
                     </DragDropProvider>
                     <div id="shuffle-options" className="bg-yellow-300 h-[150px]">
-                        <button onClick={onRandomlyAssignStudentsClicked} className="default-button">Randomly Assign Students</button>
+                        <button onClick={onRandomlyAssignStudentsClicked} className="default-button">Shuffle Students</button>
                         <button className="default-button">Trey</button>
                     </div>
                 </div>
-
-                <div id="cell-editor" className="bg-purple-400 w-full">
-                    
-                </div>
+                <DeskEditor></DeskEditor>
             </div>
         </div>
     )

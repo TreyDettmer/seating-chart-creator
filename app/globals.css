@@ -123,6 +123,7 @@ body {
 .class-rules-editor {
   background: var(--background);
   color: var(--foreground);
+  width: 500px;
 }
 
 .class-rules-editor-header {
@@ -130,11 +131,124 @@ body {
   font-weight: bold;
 }
 
-.class-rules-editor-subheader {
+
+.class-rules-group-container {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  padding: 0px 0px 20px 0px;
+}
+
+.class-rules-editor-select {
+  width: 300px;
+}
+
+.class-rules-editor-select-operation-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 5px 0px 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.class-rules-editor-select-operation {
+  width: 100px;
+}
+
+.class-rules-editor .selectable-option {
+  color: var(--background2);
+}
+
+.class-rules-editor-remove-group-button {
+  background: var(--background);
+  color: var(--foreground);
+  padding: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.class-rules-editor-remove-group-button:hover {
+  background: var(--background2);
+}
+
+.desk-tag-students-header {
+  width: 400px;
+}
+
+.desk-tag-students-row {
+  width: 400px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.desk-editor {
+  width: 100%;
+  background-color: purple;
+}
+
+.desk-editor .selectable-option {
+  color: var(--background2);
+}
+
+.desk-editor-tag-select {
+  width: 300px;
+}
+
+.desk {
+  background-color: rgb(231, 172, 62);
+  box-sizing: border-box;
+  border: 1px solid black;
+  border-radius: 5px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 95%;
+  height: 95%;
+  transform: translate(-50%, -50%);
+}
+
+.desk-dragging {
+  background-color:  rgb(231, 172, 62);
+}
+
+.desk-drop-target {
+  background-color:  rgb(187, 137, 44);
+}
+
+.desk-selected {
+  border: 3px solid black;
+  width: 97%;
+  height: 97%;
+}
+
+.modal-background-open {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.185);
+  background-color: rgb(from var(--background) r g b / 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-background-closed {
+  display: none;
 
 }
 
-.class-rules-editor [class^="select-"] {
-  background: var(--background);
+.modal-open {
+  background-color: var(--background);
   color: var(--foreground);
+  border: 2px solid black;
+  border-radius: 5px;
+  width: 300px;
+  height: 300px;
+}
+
+.modal-closed {
+  display: none
 }

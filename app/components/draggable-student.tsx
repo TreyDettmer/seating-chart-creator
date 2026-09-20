@@ -28,6 +28,7 @@ export default function DraggableStudentComponent(
 
     function onClick(event : MouseEvent<HTMLButtonElement>) {
         event.stopPropagation()
+        console.log(student)
     }
 
     return (

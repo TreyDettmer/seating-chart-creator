@@ -3,6 +3,7 @@ import { useActiveClass } from "../app-context";
 import ClassStudentList from "./class-student-list";
 import SeatingConfigEditor from "./seating-config-editor";
 import ClassRulesEditor from "./class-rules-editor";
+import DeskEditor from "./desk-editor";
 
 export default function ClassEditor() {
     const activeClass = useActiveClass();
@@ -22,7 +23,6 @@ export default function ClassEditor() {
                 </div>
                 
             </div>
-            
             <SeatingConfigEditor></SeatingConfigEditor>
         </div>
     )

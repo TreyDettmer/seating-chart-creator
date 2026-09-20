@@ -1,12 +1,16 @@
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
-import { KeepApartGroup, KeepTogetherGroup, Student } from "../app-state";
-import Select, { ActionMeta, GroupBase, MultiValue, OptionsOrGroups } from 'react-select'
+import { CustomOption, KeepApartGroup, KeepTogetherGroup, SelectOption, Student } from "../app-state";
+import Select, { ActionMeta, MultiValue, SingleValue } from 'react-select'
 import { v4 as uuid } from 'uuid'
+
+
 
 export default function ClassRulesEditor() {
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups } = useAppState();
+    const { students: allStudents, deskTags, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups } = useAppState();
+
+
 
     if (activeClass == undefined) {
         return null;
@@ -17,23 +21,22 @@ export default function ClassRulesEditor() {
         return student;
     });
 
-    const keepApartGroups : KeepApartGroup[] = activeClass?.keepApartGroupIds.map((id) => {
+    const keepApartGroups: KeepApartGroup[] = activeClass?.keepApartGroupIds.map((id) => {
         const group = allKeepApartGroups[id];
         return group;
     })
 
-    const keepTogetherGroups : KeepTogetherGroup[] = activeClass?.keepTogetherGroupIds.map((id) => {
+    const keepTogetherGroups: KeepTogetherGroup[] = activeClass?.keepTogetherGroupIds.map((id) => {
         const group = allKeepTogetherGroups[id];
         return group;
     })
 
-    interface StudentOption {
-        value: string;
-        label: string;
-    }
-    const studentOptions : StudentOption[] = students.map((student, index) => {
-        return { value: student.id, label: `${student.firstName} ${student.lastName}`}
+
+    const studentSelectOptions: SelectOption[] = students.map((student, index) => {
+        return { value: student.id, label: `${student.firstName} ${student.lastName}` }
     })
+
+    const groupOperationSelectOptions: SelectOption[] = [{ value: 'AND', label: 'AND' }, { value: 'OR', label: 'OR' }]
 
 
 
@@ -41,7 +44,7 @@ export default function ClassRulesEditor() {
         if (activeClass === undefined) {
             return
         }
-        var newGroup : KeepApartGroup = {
+        var newGroup: KeepApartGroup = {
             id: uuid(),
             studentIds: [],
             useAnd: true
@@ -49,7 +52,7 @@ export default function ClassRulesEditor() {
         dispatch({ type: 'ADD_KEEP_APART_GROUP', payload: { classId: activeClass.id, group: newGroup } });
     }
 
-    function onKeepApartGroupChanged(groupId : string, newValue: MultiValue<StudentOption>, actionMeta: ActionMeta<StudentOption>) {
+    function onKeepApartGroupChanged(groupId: string, newValue: MultiValue<SelectOption>, actionMeta: ActionMeta<SelectOption>) {
         if (activeClass === undefined) {
             return
         }
@@ -62,7 +65,23 @@ export default function ClassRulesEditor() {
         dispatch({ type: 'EDIT_KEEP_APART_GROUP', payload: { classId: activeClass.id, groupId: groupId, group: modifiedGroup } });
     }
 
-    function onRemoveKeepApartGroup(groupId : string) {
+    function onKeepApartGroupOperationChanged(groupId: string, newValue: SingleValue<SelectOption>, actionMeta: ActionMeta<SelectOption>) {
+        if (activeClass === undefined) {
+            return
+        }
+        var useAnd = newValue?.value == 'AND'
+        var existingGroup = allKeepApartGroups[groupId]
+        if (useAnd === existingGroup.useAnd) {
+            return
+        }
+        var modifiedGroup = {
+            ...existingGroup,
+            useAnd: useAnd
+        }
+        dispatch({ type: 'EDIT_KEEP_APART_GROUP', payload: { classId: activeClass.id, groupId: groupId, group: modifiedGroup } });
+    }
+
+    function onRemoveKeepApartGroup(groupId: string) {
         if (activeClass === undefined) {
             return
         }
@@ -74,7 +93,7 @@ export default function ClassRulesEditor() {
         if (activeClass === undefined) {
             return
         }
-        var newGroup : KeepTogetherGroup = {
+        var newGroup: KeepTogetherGroup = {
             id: uuid(),
             studentIds: [],
             useAnd: true
@@ -82,7 +101,7 @@ export default function ClassRulesEditor() {
         dispatch({ type: 'ADD_KEEP_TOGETHER_GROUP', payload: { classId: activeClass.id, group: newGroup } });
     }
 
-    function onKeepTogetherGroupChanged(groupId : string, newValue: MultiValue<StudentOption>, actionMeta: ActionMeta<StudentOption>) {
+    function onKeepTogetherGroupChanged(groupId: string, newValue: MultiValue<SelectOption>, actionMeta: ActionMeta<SelectOption>) {
         if (activeClass === undefined) {
             return
         }
@@ -95,13 +114,40 @@ export default function ClassRulesEditor() {
         dispatch({ type: 'EDIT_KEEP_TOGETHER_GROUP', payload: { classId: activeClass.id, groupId: groupId, group: modifiedGroup } });
     }
 
-    function onRemoveKeepTogetherGroup(groupId : string) {
+    function onKeepTogetherGroupOperationChanged(groupId: string, newValue: SingleValue<SelectOption>, actionMeta: ActionMeta<SelectOption>) {
+        if (activeClass === undefined) {
+            return
+        }
+        var useAnd = newValue?.value == 'AND'
+        var existingGroup = allKeepTogetherGroups[groupId]
+        if (useAnd === existingGroup.useAnd) {
+            return
+        }
+        var modifiedGroup = {
+            ...existingGroup,
+            useAnd: useAnd
+        }
+        dispatch({ type: 'EDIT_KEEP_TOGETHER_GROUP', payload: { classId: activeClass.id, groupId: groupId, group: modifiedGroup } });
+    }
+
+    function onRemoveKeepTogetherGroup(groupId: string) {
         if (activeClass === undefined) {
             return
         }
 
         dispatch({ type: 'REMOVE_KEEP_TOGETHER_GROUP', payload: { classId: activeClass.id, groupId: groupId } });
     }
+
+    function onStudentAssignDeskTagsChanged(tagId: string, newValue: MultiValue<SelectOption>, actionMeta: ActionMeta<SelectOption>) {
+        if (activeClass === undefined) {
+            return
+        }
+        var newStudentIds = newValue.map(x => x.value)
+
+        dispatch({ type: 'EDIT_STUDENTS_ASSIGNED_TO_DESK_TAG', payload: { tagId: tagId, studentIds: newStudentIds } });
+    }
+    
+
 
     return (
         <div className="class-rules-editor">
@@ -110,48 +156,103 @@ export default function ClassRulesEditor() {
             <p className="class-rules-editor-subheader" >Easily keep students away from each other.</p>
             <ul>
                 {keepApartGroups.map(x => {
-                    return <li key={x.id}>
+                    return <li className="class-rules-group-container" key={x.id}>
                         <Select
                             isMulti
-                            options={studentOptions}
-                            className="basic-multi-select"
+                            options={studentSelectOptions}
+                            className="class-rules-editor-select"
                             classNamePrefix="select"
+                            components={{ Option: CustomOption }}
                             value={
-                                studentOptions.filter((studentOption) => {
-        
+                                studentSelectOptions.filter((studentOption) => {
+
                                     return x.studentIds.includes(studentOption.value)
                                 })
                             }
-                            onChange={(newValue, actionMeta) => {onKeepApartGroupChanged(x.id, newValue, actionMeta)}}
+                            onChange={(newValue, actionMeta) => { onKeepApartGroupChanged(x.id, newValue, actionMeta) }}
                         />
-                        <button className="default-button" onClick={() => onRemoveKeepApartGroup(x.id)}>Remove Group</button>
+                        <div className="class-rules-editor-select-operation-container">
+                            <Select
+                                options={groupOperationSelectOptions}
+                                className="class-rules-editor-select-operation"
+                                classNamePrefix="select"
+                                components={{ Option: CustomOption }}
+                                value={
+                                    groupOperationSelectOptions.filter((groupOperationSelectOption) => {
+
+                                        return (x.useAnd && groupOperationSelectOption.label == 'AND') || (!x.useAnd && groupOperationSelectOption.label == 'OR')
+                                    })
+                                }
+                                onChange={(newValue, actionMeta) => { onKeepApartGroupOperationChanged(x.id, newValue, actionMeta) }}
+                            />
+                        </div>
+
+                        <button className="class-rules-editor-remove-group-button" onClick={() => onRemoveKeepApartGroup(x.id)}>X</button>
                     </li>
                 })}
                 <button className="default-button" onClick={() => onAddKeepApartGroup()}>+ Keep Apart Rule</button>
             </ul>
             <p className="class-rules-editor-header" >Keep Together Rules</p>
             <p className="class-rules-editor-subheader" >Keep groups of students together</p>
-            
             <ul>
                 {keepTogetherGroups.map(x => {
-                    return <li key={x.id}>
+                    return <li className="class-rules-group-container" key={x.id}>
                         <Select
                             isMulti
-                            options={studentOptions}
-                            className="basic-multi-select"
+                            options={studentSelectOptions}
+                            className="class-rules-editor-select"
                             classNamePrefix="select"
+                            components={{ Option: CustomOption }}
                             value={
-                                studentOptions.filter((studentOption) => {
-        
+                                studentSelectOptions.filter((studentOption) => {
+
                                     return x.studentIds.includes(studentOption.value)
                                 })
                             }
-                            onChange={(newValue, actionMeta) => {onKeepTogetherGroupChanged(x.id, newValue, actionMeta)}}
+                            onChange={(newValue, actionMeta) => { onKeepTogetherGroupChanged(x.id, newValue, actionMeta) }}
                         />
-                        <button className="default-button" onClick={() => onRemoveKeepTogetherGroup(x.id)}>Remove Group</button>
+                        <div className="class-rules-editor-select-operation-container">
+                            <Select
+                                options={groupOperationSelectOptions}
+                                className="class-rules-editor-select-operation"
+                                classNamePrefix="select"
+                                components={{ Option: CustomOption }}
+                                value={
+                                    groupOperationSelectOptions.filter((groupOperationSelectOption) => {
+
+                                        return (x.useAnd && groupOperationSelectOption.label == 'AND') || (!x.useAnd && groupOperationSelectOption.label == 'OR')
+                                    })
+                                }
+                                onChange={(newValue, actionMeta) => { onKeepTogetherGroupOperationChanged(x.id, newValue, actionMeta) }}
+                            />
+                        </div>
+                        <button className="class-rules-editor-remove-group-button" onClick={() => onRemoveKeepTogetherGroup(x.id)}>X</button>
                     </li>
                 })}
                 <button className="default-button" onClick={() => onAddKeepTogetherGroup()}>+ Keep Together Rule</button>
+            </ul>
+            <p className="class-rules-editor-header">Desk Tag Rules</p>
+            <p className="class-rules-editor-subheader">Restrict students on the seating chart to desks with a certain tag.</p>
+            <ul>
+                {Object.entries(deskTags).map(([tagId, deskTag]) => {
+                    return <li className="desk-tag-students-row" key={tagId}>
+                        <p>{deskTag.name}</p>
+                        <Select
+                            isMulti
+                            options={studentSelectOptions}
+                            className="class-rules-editor-select"
+                            classNamePrefix="select"
+                            components={{ Option: CustomOption }}
+                            value={
+                                studentSelectOptions.filter((studentOption) => {
+                                    return allStudents[studentOption.value].deskTagIds.includes(tagId)
+                                })
+                            }
+                            onChange={(newValue, actionMeta) => { onStudentAssignDeskTagsChanged(tagId, newValue, actionMeta) }}
+                        />
+                    </li>
+                })}
+                
             </ul>
         </div>
     )
