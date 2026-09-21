@@ -12,10 +12,33 @@ export const CustomOption = (props: any) => {
   );
 };
 
+export const deskTagColorDot = (color = 'transparent') => ({
+    alignItems: 'center',
+    display: 'flex',
+
+    ':before': {
+        backgroundColor: color,
+        borderRadius: 10,
+        content: '" "',
+        display: 'block',
+        marginRight: 2,
+        marginLeft: 2,
+        height: 10,
+        width: 10,
+    },
+});
+
 export interface SelectOption {
   value: string;
   label: string;
 }
+
+export interface DeskTagSelectOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
 export type AppAction =
   | { type: 'LOAD_STATE'; payload: AppState }
   | { type: 'ADD_CLASS'; payload: { id: string; name: string } }
@@ -72,6 +95,8 @@ export type AppAction =
   | { type: 'REMOVE_DESK_TAG_FROM_CELL'; payload: { tagId: string; configId: string; row: number; col: number; } }
   | { type: 'ADD_DESK_TAG_TO_STUDENT'; payload: { tagId: string; classId: string; student: Student } }
   | { type: 'REMOVE_DESK_TAG_FROM_STUDENT'; payload: { tagId: string; classId: string; student: Student } }
+  | { type: 'REMOVE_DESK'; payload: { configId: string; row: number; col: number; } }
+  | { type: 'ADD_DESK'; payload: { configId: string; } }
 
 export interface Student {
   id: string;
@@ -117,6 +142,7 @@ export interface SchoolClass {
 export interface DeskTag {
   id: string;
   name: string;
+  color: string;
 }
 
 export interface AppState {
@@ -497,8 +523,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const newGrid = config.grid.map((r) => r.slice());
       const a = newGrid[cellA.row][cellA.col];
       const b = newGrid[cellB.row][cellB.col];
-      newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents };
-      newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents };
+      newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents, deskTagIds: b.deskTagIds };
+      newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents, deskTagIds: a.deskTagIds };
 
       return {
         ...state,
@@ -719,6 +745,67 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         students: updatedStudents,
       };
+    }
+
+    case 'REMOVE_DESK': {
+      const {configId, row, col} = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+      const newGrid = config.grid.slice();
+      const newRow = newGrid[row].slice();
+      newRow[col] = {
+        ...newRow[col],
+        allowsStudents: true,
+        hasDesk: false,
+        deskTagIds: []
+      };
+      newGrid[row] = newRow;
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: { ...config, 
+            grid: newGrid,
+            selectedCell: null
+          },
+        },
+      };
+    }
+    case 'ADD_DESK': {
+      const {configId} = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+      const newGrid = config.grid.map(row => row.map(cell => ({ ...cell })));
+      var hasAddedDesk : boolean = false
+      for (let row = 0; row < config.rows; row++) {
+        for (let col = 0; col < config.cols; col++) {
+          if (newGrid[row][col].hasDesk === false) {
+            newGrid[row][col] = {
+              ...newGrid[row][col],
+              allowsStudents: true,
+              hasDesk: true,
+              deskTagIds: []
+            }
+            hasAddedDesk = true;
+            break;
+            
+          }
+        }
+        if (hasAddedDesk == true) {
+          break
+        }
+      }
+
+      return {
+              ...state,
+              seatingConfigurations: {
+                ...state.seatingConfigurations,
+                [configId]: { 
+                  ...config, 
+                  grid: newGrid
+                },
+              },
+            };
     }
 
     default:

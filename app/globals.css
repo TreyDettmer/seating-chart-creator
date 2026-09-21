@@ -58,6 +58,10 @@ body {
   cursor: pointer;
 }
 
+.default-button.destructive {
+  border: 2px solid red;
+}
+
 .default-button:hover {
   background: var(--background2);
 }
@@ -172,14 +176,22 @@ body {
 }
 
 .desk-tag-students-header {
-  width: 400px;
-}
-
-.desk-tag-students-row {
-  width: 400px;
+  width: 500px;
   display: flex;
   flex-direction: row;
   align-items: center;
+  padding: 5px 10px 5px 10px;
+  border-bottom: 2px solid var(--foreground);
+  font-weight: bold;
+}
+
+.desk-tag-students-row {
+  width: 500px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 5px 10px 5px 10px;
+  border-bottom: 2px solid var(--foreground);
 }
 
 .desk-editor {
@@ -208,6 +220,19 @@ body {
   transform: translate(-50%, -50%);
 }
 
+.desk-desk-tag-marker-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+}
+
+.desk-desk-tag-marker {
+  width: 20%;
+  height: 10%;
+}
+
 .desk-dragging {
   background-color:  rgb(231, 172, 62);
 }
@@ -220,6 +245,36 @@ body {
   border: 3px solid black;
   width: 97%;
   height: 97%;
+}
+
+.draggable-student {
+  /*className="bg-[rgb(238,238,238)] text-black box-border border border-[rgb(48,48,48)] rounded-sm absolute p-px w-[75%] h-[75%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-5 flex justify-center items-center">*/
+  background-color: whitesmoke;
+  color: black;
+  box-sizing: border-box;
+  border: 1px solid gray;
+  border-radius: 5px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 75%;
+  height: 75%;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.student-desk-tag-marker-container {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: end;
 }
 
 .modal-background-open {
@@ -251,4 +306,19 @@ body {
 
 .modal-closed {
   display: none
+}
+
+.modal-text-input {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 2px solid var(--foreground2);
+  border-radius: 5px;
+}
+
+.desk-tag-creation-modal {
+  padding: 5px;
+}
+
+.desk-tag-creation-modal .title {
+  font-size: large;
 }

@@ -1,5 +1,5 @@
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
-import { CustomOption, KeepApartGroup, KeepTogetherGroup, SelectOption, Student } from "../app-state";
+import { CustomOption, deskTagColorDot, KeepApartGroup, KeepTogetherGroup, SelectOption, Student } from "../app-state";
 import Select, { ActionMeta, MultiValue, SingleValue } from 'react-select'
 import { v4 as uuid } from 'uuid'
 
@@ -146,7 +146,7 @@ export default function ClassRulesEditor() {
 
         dispatch({ type: 'EDIT_STUDENTS_ASSIGNED_TO_DESK_TAG', payload: { tagId: tagId, studentIds: newStudentIds } });
     }
-    
+
 
 
     return (
@@ -234,13 +234,31 @@ export default function ClassRulesEditor() {
             <p className="class-rules-editor-header">Desk Tag Rules</p>
             <p className="class-rules-editor-subheader">Restrict students on the seating chart to desks with a certain tag.</p>
             <ul>
+                <div className="desk-tag-students-header">
+                    <p className="flex-1 text-center">Desk Tag</p>
+                    <p className="flex-1 text-center">Students</p>
+                </div>
                 {Object.entries(deskTags).map(([tagId, deskTag]) => {
                     return <li className="desk-tag-students-row" key={tagId}>
-                        <p>{deskTag.name}</p>
+                        <p className="flex-1" style={{ display: 'flex', alignItems: 'center' }}>
+                            <span
+                                aria-hidden="true"
+                                style={{
+                                    backgroundColor: deskTag.color,
+                                    borderRadius: 10,
+                                    display: 'block',
+                                    width: 10,
+                                    height: 10,
+                                    marginRight: 2,
+                                    marginLeft: 2,
+                                }}
+                            />
+                            {deskTag.name}
+                        </p>
                         <Select
                             isMulti
                             options={studentSelectOptions}
-                            className="class-rules-editor-select"
+                            className="class-rules-editor-select flex-1"
                             classNamePrefix="select"
                             components={{ Option: CustomOption }}
                             value={
@@ -252,7 +270,7 @@ export default function ClassRulesEditor() {
                         />
                     </li>
                 })}
-                
+
             </ul>
         </div>
     )

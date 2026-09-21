@@ -83,6 +83,19 @@ export default function SeatingConfigEditor() {
         }
     }
 
+    function onAddDesk() {
+        if (activeConfig === undefined) {
+            return
+        }
+
+        if (activeConfigurationId === null) {
+            return
+        }
+        console.log("Calling!")
+        dispatch({ type: 'ADD_DESK', payload: { configId: activeConfigurationId } });
+
+    }
+
     function onRandomlyAssignStudentsClicked() {
         if (activeConfig === undefined || activeClass === undefined) {
             return
@@ -100,8 +113,6 @@ export default function SeatingConfigEditor() {
             console.log("Not enough desks")
             return
         }
-        
-
     }
 
     return (
@@ -136,7 +147,7 @@ export default function SeatingConfigEditor() {
                     </DragDropProvider>
                     <div id="shuffle-options" className="bg-yellow-300 h-[150px]">
                         <button onClick={onRandomlyAssignStudentsClicked} className="default-button">Shuffle Students</button>
-                        <button className="default-button">Trey</button>
+                        <button onClick={onAddDesk} className="default-button">Add Desk</button>
                     </div>
                 </div>
                 <DeskEditor></DeskEditor>
