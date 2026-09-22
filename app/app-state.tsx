@@ -1,43 +1,6 @@
 import { ReactNode } from "react";
 import { components } from 'react-select';
 
-export const CustomOption = (props: any) => {
-  return (
-    <components.Option
-      {...props}
-      className={`selectable-option`}
-    >
-      {props.children}
-    </components.Option>
-  );
-};
-
-export const deskTagColorDot = (color = 'transparent') => ({
-    alignItems: 'center',
-    display: 'flex',
-
-    ':before': {
-        backgroundColor: color,
-        borderRadius: 10,
-        content: '" "',
-        display: 'block',
-        marginRight: 2,
-        marginLeft: 2,
-        height: 10,
-        width: 10,
-    },
-});
-
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export interface DeskTagSelectOption {
-  value: string;
-  label: string;
-  color: string;
-}
 
 export type AppAction =
   | { type: 'LOAD_STATE'; payload: AppState }
@@ -50,6 +13,7 @@ export type AppAction =
   | { type: 'TOGGLE_SELECTED_CELL'; payload: { configId: string; cell: { row: number, col: number } | null } }
   | { type: 'ADD_SEATING_CONFIG'; payload: { classId: string; config: SeatingConfiguration }; }
   | { type: 'REMOVE_SEATING_CONFIG'; payload: { classId: string; configId: string }; }
+  | { type: 'UPDATE_SEATING_CONFIG_GRID'; payload: { configId: string; newGrid : FloorCell[][] }; }
   | { type: 'ADD_KEEP_APART_GROUP'; payload: { classId: string; group: KeepApartGroup } }
   | { type: 'REMOVE_KEEP_APART_GROUP'; payload: { classId: string; groupId: string } }
   | { type: 'EDIT_KEEP_APART_GROUP'; payload: { classId: string; groupId: string; group: KeepApartGroup } }
@@ -98,13 +62,55 @@ export type AppAction =
   | { type: 'REMOVE_DESK'; payload: { configId: string; row: number; col: number; } }
   | { type: 'ADD_DESK'; payload: { configId: string; } }
 
+export const CustomOption = (props: any) => {
+  return (
+    <components.Option
+      {...props}
+      className={`selectable-option`}
+    >
+      {props.children}
+    </components.Option>
+  );
+};
+
+export const deskTagColorDot = (color = 'transparent') => ({
+  alignItems: 'center',
+  display: 'flex',
+
+  ':before': {
+    backgroundColor: color,
+    borderRadius: 10,
+    content: '" "',
+    display: 'block',
+    marginRight: 2,
+    marginLeft: 2,
+    height: 10,
+    width: 10,
+  },
+});
+
+export interface ShuffleResult {
+  grid: FloorCell[][]
+  score: number
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface DeskTagSelectOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
+
 export interface Student {
   id: string;
   firstName: string;
   lastName: string;
   gender: number;
-  likeIds: string[];
-  dislikeIds: string[];
   deskTagIds: string[];
 }
 
@@ -112,8 +118,6 @@ export interface StudentCsvRow {
   FirstName: string;
   LastName: string;
   Gender: number;
-  LikeIds: string
-  DislikeIds: string
 }
 
 export interface KeepApartGroup {
@@ -332,6 +336,21 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
         },
       };
+    }
+
+    case 'UPDATE_SEATING_CONFIG_GRID': {
+      const { configId, newGrid} = action.payload;
+      const config = state.seatingConfigurations[configId];
+      if (!config) return state;
+
+      return {
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: { ...config, grid: newGrid },
+        },
+      };
+
     }
 
     case 'ADD_KEEP_APART_GROUP': {
@@ -748,7 +767,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'REMOVE_DESK': {
-      const {configId, row, col} = action.payload;
+      const { configId, row, col } = action.payload;
       const config = state.seatingConfigurations[configId];
       if (!config) return state;
       const newGrid = config.grid.slice();
@@ -764,7 +783,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         seatingConfigurations: {
           ...state.seatingConfigurations,
-          [configId]: { ...config, 
+          [configId]: {
+            ...config,
             grid: newGrid,
             selectedCell: null
           },
@@ -772,11 +792,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
     case 'ADD_DESK': {
-      const {configId} = action.payload;
+      const { configId } = action.payload;
       const config = state.seatingConfigurations[configId];
       if (!config) return state;
       const newGrid = config.grid.map(row => row.map(cell => ({ ...cell })));
-      var hasAddedDesk : boolean = false
+      var hasAddedDesk: boolean = false
       for (let row = 0; row < config.rows; row++) {
         for (let col = 0; col < config.cols; col++) {
           if (newGrid[row][col].hasDesk === false) {
@@ -788,7 +808,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             }
             hasAddedDesk = true;
             break;
-            
+
           }
         }
         if (hasAddedDesk == true) {
@@ -797,15 +817,15 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       }
 
       return {
-              ...state,
-              seatingConfigurations: {
-                ...state.seatingConfigurations,
-                [configId]: { 
-                  ...config, 
-                  grid: newGrid
-                },
-              },
-            };
+        ...state,
+        seatingConfigurations: {
+          ...state.seatingConfigurations,
+          [configId]: {
+            ...config,
+            grid: newGrid
+          },
+        },
+      };
     }
 
     default:

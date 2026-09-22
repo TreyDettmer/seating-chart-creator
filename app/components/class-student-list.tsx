@@ -35,8 +35,6 @@ export default function ClassStudentList() {
                     var rowData: StudentCsvRow = results.data[i]
                     var student: Student = {
                         id: `${i}`, firstName: `${rowData.FirstName}`, lastName: `${rowData.LastName}`, gender: rowData.Gender,
-                        likeIds: rowData.LikeIds != null ? rowData.LikeIds.split(";") : [],
-                        dislikeIds: rowData.DislikeIds != null ? rowData.DislikeIds.split(";") : [],
                         deskTagIds: []
                     }
                     importedStudents[student.id] = student

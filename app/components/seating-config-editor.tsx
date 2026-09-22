@@ -1,5 +1,5 @@
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { FloorCell, SeatingConfiguration } from "../app-state";
+import { FloorCell, KeepApartGroup, KeepTogetherGroup, SeatingConfiguration, ShuffleResult, Student } from "../app-state";
 
 import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";
@@ -8,8 +8,13 @@ import DeskEditor from "./desk-editor";
 
 export default function SeatingConfigEditor() {
     const activeClass = useActiveClass();
-    const { seatingConfigurations: allSeatingConfigs } = useAppState();
+    const { students: allStudents, seatingConfigurations: allSeatingConfigs, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups, deskTags: allDeskTags } = useAppState();
     const dispatch = useAppDispatch();
+    const activeConfig = useActiveSeatingConfig()
+    const PREFERENCE_WEIGHT = 10; // reward: student seated at a desk that tags them
+    const TOGETHER_WEIGHT = 8;    // reward: keepTogether pair seated adjacently
+    const APART_PENALTY = 12;     // penalty: keepApart pair seated adjacently
+
     if (activeClass === undefined) {
         return null;
     }
@@ -18,9 +23,13 @@ export default function SeatingConfigEditor() {
         const seatingConfig = allSeatingConfigs[id];
         return seatingConfig;
     });
+    const students: Student[] = activeClass?.studentIds.map((id) => {
+        const student = allStudents[id];
+        return student;
+    });
     const activeConfigurationId = activeClass.activeConfigurationId
-    const activeConfig = useActiveSeatingConfig()
-
+    const keepApartGroups: KeepApartGroup[] = activeClass.keepApartGroupIds.map(x => allKeepApartGroups[x])
+    const keepTogetherGroups: KeepTogetherGroup[] = activeClass.keepTogetherGroupIds.map(x => allKeepTogetherGroups[x])
 
     function onDragEnd(event: DragEndEvent) {
         if (event.canceled) {
@@ -96,7 +105,8 @@ export default function SeatingConfigEditor() {
 
     }
 
-    function onRandomlyAssignStudentsClicked() {
+    function onShuffleStudents() {
+        const iterations = 100, startTemp = 10, endTemp = 0.01
         if (activeConfig === undefined || activeClass === undefined) {
             return
         }
@@ -113,7 +123,348 @@ export default function SeatingConfigEditor() {
             console.log("Not enough desks")
             return
         }
+
+        var grid: FloorCell[][] = activeConfig.grid.map(row => row.map(cell => ({ ...cell })));
+        // Get the cells which have a student at a desk which doesn't allows students
+        var cellsInvalidOccupiedDesks: number[][] = []
+        for (let rowIndex = 0; rowIndex < activeConfig.rows; rowIndex++) {
+            for (let colIndex = 0; colIndex < activeConfig.cols; colIndex++) {
+                if (grid[rowIndex][colIndex].hasDesk && grid[rowIndex][colIndex].studentId && grid[rowIndex][colIndex].allowsStudents === false) {
+                    cellsInvalidOccupiedDesks.push([rowIndex, colIndex])
+                }
+            }
+        }
+
+        // Move students out of desks that don't allow students
+        for (let i = cellsInvalidOccupiedDesks.length - 1; i >= 0; i--) {
+            var focusedCell = cellsInvalidOccupiedDesks.pop()
+            if (focusedCell === undefined) {
+                continue;
+            }
+            var studentIdToMove: string = grid[focusedCell[0]][focusedCell[1]].studentId!
+            var hasMovedStudent: boolean = false
+            for (let rowIndex = 0; rowIndex < activeConfig.rows; rowIndex++) {
+                for (let colIndex = 0; colIndex < activeConfig.cols; colIndex++) {
+                    if (grid[rowIndex][colIndex].hasDesk && grid[rowIndex][colIndex].studentId == null && grid[rowIndex][colIndex].allowsStudents === false) {
+                        grid[rowIndex][colIndex].studentId = studentIdToMove;
+                        grid[focusedCell[0]][focusedCell[1]].studentId = null;
+                        hasMovedStudent = true
+                        break
+                    }
+                }
+                if (hasMovedStudent) {
+                    break
+                }
+            }
+            if (hasMovedStudent === false) {
+                console.log("Not enough available desks to move students off of restricted desks")
+                return
+            }
+        }
+
+        var desks: FloorCell[] = []
+        for (let rowIndex = 0; rowIndex < activeConfig.rows; rowIndex++) {
+            for (let colIndex = 0; colIndex < activeConfig.cols; colIndex++) {
+                if (grid[rowIndex][colIndex].hasDesk && grid[rowIndex][colIndex].allowsStudents) {
+                    desks.push(grid[rowIndex][colIndex])
+                }
+            }
+        }
+
+        var adjacencyMap: Map<string, string[]> = new Map();
+        for (const cell of desks) {
+            adjacencyMap.set(cell.id, getAdjacentFloorCells(cell, grid, activeConfig.rows, activeConfig.cols).filter(x => x != null).map((x) => x.id));
+        }
+
+
+
+
+        var deskSetPreferenceMap: Map<string, Set<string>> = new Map();
+        for (const cell of desks) {
+            const set: Set<string> = new Set();
+            for (const deskTagId of cell.deskTagIds) {
+                students.filter(x => x.deskTagIds.includes(deskTagId)).map(x =>
+                    set.add(x.id)
+                )
+            }
+            deskSetPreferenceMap.set(cell.id, set);
+        }
+
+
+
+
+        // Start from a random assignment: shuffle desks, take the first N for students,
+        // the rest start out (and may remain) empty.
+        const shuffledDeskIds = [...desks.map(x => x.id)].sort(() => Math.random() - 0.5);
+        const studentToDesk: Map<string, string> = new Map();
+        students.forEach((student, i) => {
+            studentToDesk.set(student.id, shuffledDeskIds[i]);
+        });
+
+        // Remaining desks are empty. Order doesn't matter -- we just need a
+        // mutable list we can pick from and swap entries in/out of.
+        let emptyDeskIds = shuffledDeskIds.slice(students.length);
+
+
+        let currentScore = scoreAssignment(
+            studentToDesk,
+            deskSetPreferenceMap,
+            adjacencyMap
+        );
+
+        let bestAssignment = new Map(studentToDesk);
+        let bestScore = currentScore;
+
+        for (let iter = 0; iter < iterations; iter++) {
+            // Exponential cooling schedule
+            const t = startTemp * Math.pow(endTemp / startTemp, iter / iterations);
+
+            // Two kinds of moves:
+            //  - "swap": two students trade desks
+            //  - "relocate": one student moves to a currently-empty desk
+            // Only offer "relocate" when there's an empty desk to move to.
+            const canRelocate = emptyDeskIds.length > 0;
+            const doRelocate = canRelocate && Math.random() < 0.5;
+
+            let undoMove;
+
+            if (doRelocate) {
+                const studentIdx = Math.floor(Math.random() * students.length);
+                const emptyIdx = Math.floor(Math.random() * emptyDeskIds.length);
+
+                const studentId = students[studentIdx].id;
+                const oldDeskId = studentToDesk.get(studentId);
+                const newDeskId = emptyDeskIds[emptyIdx];
+
+                studentToDesk.set(studentId, newDeskId);
+                emptyDeskIds[emptyIdx] = oldDeskId!;
+
+                undoMove = () => {
+                    studentToDesk.set(studentId, oldDeskId!);
+                    emptyDeskIds[emptyIdx] = newDeskId;
+                };
+            } else {
+                const idxA = Math.floor(Math.random() * students.length);
+                let idxB = Math.floor(Math.random() * students.length);
+                while (idxB === idxA) idxB = Math.floor(Math.random() * students.length);
+
+                const studentA = students[idxA].id;
+                const studentB = students[idxB].id;
+                const deskA = studentToDesk.get(studentA);
+                const deskB = studentToDesk.get(studentB);
+
+                studentToDesk.set(studentA, deskB!);
+                studentToDesk.set(studentB, deskA!);
+
+                undoMove = () => {
+                    studentToDesk.set(studentA, deskA!);
+                    studentToDesk.set(studentB, deskB!);
+                };
+            }
+
+            const newScore = scoreAssignment(
+                studentToDesk,
+                deskSetPreferenceMap,
+                adjacencyMap
+            );
+            const delta = newScore - currentScore;
+
+            if (delta >= 0 || Math.random() < Math.exp(delta / t)) {
+                // accept (better, or accepted anyway per annealing schedule)
+                currentScore = newScore;
+                if (currentScore > bestScore) {
+                    bestScore = currentScore;
+                    bestAssignment = new Map(studentToDesk);
+                }
+            } else {
+                // reject: undo the move
+                undoMove();
+            }
+        }
+
+        var reveresedBestAssignment = new Map(Array.from(bestAssignment, ([key, value]) => [value, key]));
+        for (let rowIndex = 0; rowIndex < activeConfig.rows; rowIndex++) {
+            for (let colIndex = 0; colIndex < activeConfig.cols; colIndex++) {
+                if (reveresedBestAssignment.has(grid[rowIndex][colIndex].id)) {
+                    grid[rowIndex][colIndex].studentId = reveresedBestAssignment.get(grid[rowIndex][colIndex].id)!
+                } else {
+                    grid[rowIndex][colIndex].studentId = null
+                }
+                
+
+            }
+        }
+        
+        dispatch({ type: 'UPDATE_SEATING_CONFIG_GRID', payload: { configId: activeConfig.id, newGrid: grid } });
     }
+
+    function scoreAssignment(
+        studentToDesk: Map<string, string>,
+        deskPrefSets: Map<string, Set<string>>,
+        adjacencyMap: Map<string, string[]>
+    ) {
+        let score = 0;
+
+        // 1. Desk-tag preference
+        for (const [studentId, deskId] of studentToDesk.entries()) {
+            const prefSet = deskPrefSets.get(deskId);
+            if (prefSet && prefSet.has(studentId)) score += PREFERENCE_WEIGHT;
+        }
+
+        // 2. Keep-together groups
+        for (const group of keepTogetherGroups) {
+
+            for (let i = 0; i < group.studentIds.length; i++) {
+                for (let j = i + 1; j < group.studentIds.length; j++) {
+                    const deskA = studentToDesk.get(group.studentIds[i]);
+                    const deskB = studentToDesk.get(group.studentIds[j]);
+
+                    if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                        score += TOGETHER_WEIGHT;
+                    }
+                }
+            }
+        }
+
+        // 3. Keep-apart groups
+        for (const group of keepApartGroups) {
+            for (let i = 0; i < group.studentIds.length; i++) {
+                for (let j = i + 1; j < group.studentIds.length; j++) {
+                    const deskA = studentToDesk.get(group.studentIds[i]);
+                    const deskB = studentToDesk.get(group.studentIds[j]);
+                    if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                        score -= APART_PENALTY;
+                    }
+                }
+            }
+        }
+
+        return score;
+    }
+
+
+
+    // function getGridShuffleScore(grid : FloorCell[][], rows : number, cols : number) : ShuffleResult {
+    //     var score : number = 0;
+    //     const keepApartComplianceBonus : number = +1
+    //     const keepTogetherComplianceBonus : number = +1
+    //     const keepApartViolationPenalty : number = -1
+    //     const keepTogetherViolationPenalty : number = -1
+
+    //     if (activeClass === undefined) {
+    //         return {
+    //             grid: grid,
+    //             score: score
+    //         }
+    //     }
+
+    //     // for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+    //     //     for (let colIndex = 0; colIndex < cols; colIndex++) {
+    //     //         // Ignore cells that don't have a desk and student
+    //     //         if (grid[rowIndex][colIndex].hasDesk == false || grid[rowIndex][colIndex].studentId == null) {
+    //     //             continue
+    //     //         }
+    //     //         const thisStudent : Student | undefined = allStudents[grid[rowIndex][colIndex].studentId!]
+    //     //         const adjacentFloorCells : (FloorCell | null)[] = getAdjacentFloorCells(rowIndex, colIndex, grid, rows, cols)
+
+    //     //         // Check keep apart rules
+    //     //         for (let i = 0; i < keepApartGroups.length; i++) {
+    //     //             const group : KeepApartGroup = keepApartGroups[i]
+    //     //             if (group.studentIds.includes(thisStudent.id) == false) {
+    //     //                 // irrelevant group
+    //     //                 continue;
+    //     //             }
+    //     //             var otherStudentIdsToConsider = group.studentIds.filter(x => x != thisStudent.id);
+    //     //             let studentIdsOfAdjacentCells = adjacentFloorCells.filter(x => x != null).filter(x => x.studentId != null).map(y => y.studentId!)
+    //     //             if (group.useAnd == true) {
+
+    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.every(x => studentIdsOfAdjacentCells.includes(x));
+    //     //                 if (isGroupInAdjacentCells) {
+    //     //                     score += keepApartViolationPenalty
+    //     //                 } else {
+    //     //                     score += keepApartComplianceBonus
+    //     //                 }
+    //     //             } else {
+    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.filter(x => studentIdsOfAdjacentCells.includes(x)).length > 0;
+    //     //                 if (isGroupInAdjacentCells) {
+    //     //                     score += keepApartViolationPenalty
+    //     //                 } else {
+    //     //                     score += keepApartComplianceBonus
+    //     //                 }
+    //     //             }
+    //     //         }
+
+    //     //         // Check keep together rules
+    //     //         for (let i = 0; i < keepTogetherGroups.length; i++) {
+    //     //             const group : KeepTogetherGroup = keepTogetherGroups[i]
+    //     //             if (group.studentIds.includes(thisStudent.id) == false) {
+    //     //                 // irrelevant group
+    //     //                 continue;
+    //     //             }
+    //     //             var otherStudentIdsToConsider = group.studentIds.filter(x => x != thisStudent.id);
+    //     //             let studentIdsOfAdjacentCells = adjacentFloorCells.filter(x => x != null).filter(x => x.studentId != null).map(y => y.studentId!)
+    //     //             if (group.useAnd == true) {
+
+    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.every(x => studentIdsOfAdjacentCells.includes(x));
+    //     //                 if (isGroupInAdjacentCells) {
+    //     //                     score += keepTogetherComplianceBonus
+    //     //                 } else {
+    //     //                     score += keepTogetherViolationPenalty
+    //     //                 }
+    //     //             } else {
+    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.filter(x => studentIdsOfAdjacentCells.includes(x)).length > 0;
+    //     //                 if (isGroupInAdjacentCells) {
+    //     //                     score += keepTogetherComplianceBonus
+    //     //                 } else {
+    //     //                     score += keepTogetherViolationPenalty
+    //     //                 }
+    //     //             }
+    //     //         }
+
+
+    //     //         for (const adjacentCell of adjacentFloorCells) {
+    //     //             if (adjacentCell === null) {
+    //     //                 continue
+    //     //             }
+    //     //             if (adjacentCell.hasDesk == false || adjacentCell.studentId == null) {
+    //     //                 continue
+    //     //             }
+    //     //         }
+
+    //     //     }
+    //     // }
+    //     return {
+    //         grid: grid,
+    //         score: score
+    //     }
+    // }
+
+
+
+    // function getAdjacentFloorCells(givenRow : number, givenCol : number, floorCells : FloorCell[][], rows : number, cols : number) : (FloorCell | null)[] {
+    //     var leftCell : FloorCell | null = givenCol > 0 ? floorCells[givenRow][givenCol - 1] : null
+    //     var rightCell : FloorCell | null = givenCol < cols - 1 ? floorCells[givenRow][givenCol + 1] : null
+    //     var upperCell : FloorCell | null = givenRow > 0 ? floorCells[givenRow - 1][givenCol]: null
+    //     var lowerCell : FloorCell | null = givenRow < rows - 1 ? floorCells[givenRow + 1][givenCol] : null
+    //     var upperLeftCell : FloorCell | null = givenCol > 0 && givenRow > 0 ? floorCells[givenRow - 1][givenCol - 1] : null
+    //     var upperRightCell : FloorCell | null = givenCol < cols - 1 && givenRow > 0 ? floorCells[givenRow - 1][givenCol + 1] : null
+    //     var lowerLeftCell : FloorCell | null = givenCol > 0 && givenRow < rows - 1 ? floorCells[givenRow + 1][givenCol - 1] : null
+    //     var lowerRightCell : FloorCell | null = givenCol < cols - 1 && givenRow < rows - 1 ? floorCells[givenRow + 1][givenCol + 1] : null
+    //     return [leftCell, rightCell, upperCell, lowerCell, upperLeftCell, upperRightCell, lowerLeftCell, lowerRightCell]
+    // }
+
+    function getAdjacentFloorCells(givenCell: FloorCell, floorCells: FloorCell[][], rows: number, cols: number): (FloorCell | null)[] {
+        var leftCell: FloorCell | null = givenCell.column > 0 ? floorCells[givenCell.row][givenCell.column - 1] : null
+        var rightCell: FloorCell | null = givenCell.column < cols - 1 ? floorCells[givenCell.row][givenCell.column + 1] : null
+        var upperCell: FloorCell | null = givenCell.row > 0 ? floorCells[givenCell.row - 1][givenCell.column] : null
+        var lowerCell: FloorCell | null = givenCell.row < rows - 1 ? floorCells[givenCell.row + 1][givenCell.column] : null
+        var upperLeftCell: FloorCell | null = givenCell.column > 0 && givenCell.row > 0 ? floorCells[givenCell.row - 1][givenCell.column - 1] : null
+        var upperRightCell: FloorCell | null = givenCell.column < cols - 1 && givenCell.row > 0 ? floorCells[givenCell.row - 1][givenCell.column + 1] : null
+        var lowerLeftCell: FloorCell | null = givenCell.column > 0 && givenCell.row < rows - 1 ? floorCells[givenCell.row + 1][givenCell.column - 1] : null
+        var lowerRightCell: FloorCell | null = givenCell.column < cols - 1 && givenCell.row < rows - 1 ? floorCells[givenCell.row + 1][givenCell.column + 1] : null
+        return [leftCell, rightCell, upperCell, lowerCell, upperLeftCell, upperRightCell, lowerLeftCell, lowerRightCell]
+    }
+
 
     return (
         <div className="flex flex-col grow border-l">
@@ -146,7 +497,7 @@ export default function SeatingConfigEditor() {
                         </div>
                     </DragDropProvider>
                     <div id="shuffle-options" className="bg-yellow-300 h-[150px]">
-                        <button onClick={onRandomlyAssignStudentsClicked} className="default-button">Shuffle Students</button>
+                        <button onClick={onShuffleStudents} className="default-button">Shuffle Students</button>
                         <button onClick={onAddDesk} className="default-button">Add Desk</button>
                     </div>
                 </div>
