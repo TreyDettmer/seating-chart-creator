@@ -103,7 +103,7 @@ export default function DeskEditor() {
             color: newDeskTagInfo.color.trim(),
         }
         setNewDeskTagInfo({ name: "", color: "blue" })
-        dispatch({ type: 'CREATE_DESK_TAG', payload: { configId: activeConfig.id, row: activeConfig.selectedCell.row, col: activeConfig.selectedCell.col, deskTag: newTag } });
+        dispatch({ type: 'CREATE_DESK_TAG', payload: { configId: activeConfig.id, deskTag: newTag, row: activeConfig.selectedCell.row, col: activeConfig.selectedCell.col } });
     }
 
     function openDeskTagCreationModal() {

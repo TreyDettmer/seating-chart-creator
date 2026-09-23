@@ -5,6 +5,7 @@
   --background2: #e2e2e2;
   --foreground: #171717;
   --foreground2: #2b2b2b;
+  --desk: rgb(209, 195, 169);
 }
 
 @theme inline {
@@ -121,16 +122,19 @@ body {
   cursor: pointer;
   text-align: center;
   vertical-align:middle;
-  z-index: 2;
+  z-index: 1;
 }
 
-.class-rules-editor {
+.class-rules-editor,
+.desk-tags-editor {
   background: var(--background);
   color: var(--foreground);
   width: 500px;
 }
 
-.class-rules-editor-header {
+
+.class-rules-editor-header,
+.desk-tags-editor-header {
   font-size: x-large;
   font-weight: bold;
 }
@@ -175,6 +179,25 @@ body {
   background: var(--background2);
 }
 
+.classroom {
+  background-color: rgb(191, 202, 204);
+  position: relative;
+  width: 800px;
+  height: 800px;
+  overflow: scroll;
+}
+
+.classroom-floor-grid {
+  width: 800px;
+  height: 800px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .desk-tag-students-header {
   width: 500px;
   display: flex;
@@ -191,7 +214,17 @@ body {
   flex-direction: row;
   align-items: center;
   padding: 5px 10px 5px 10px;
-  border-bottom: 2px solid var(--foreground);
+  /* border-bottom: 2px solid var(--foreground); */
+}
+
+.desk-tags-editor-row {
+  width: 500px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  padding: 5px 10px 5px 10px;
+  /* border-bottom: 2px solid var(--foreground); */
 }
 
 .desk-editor {
@@ -208,9 +241,9 @@ body {
 }
 
 .desk {
-  background-color: rgb(231, 172, 62);
+  background-color: var(--desk);
   box-sizing: border-box;
-  border: 1px solid black;
+  border: 1px solid rgba(75, 75, 75, 0.603);
   border-radius: 5px;
   position: absolute;
   left: 50%;
@@ -218,6 +251,8 @@ body {
   width: 95%;
   height: 95%;
   transform: translate(-50%, -50%);
+  cursor: pointer;
+  box-shadow: 2px 2px 2px rgba(114, 114, 114, 0.507);
 }
 
 .desk-desk-tag-marker-container {
@@ -234,11 +269,17 @@ body {
 }
 
 .desk-dragging {
-  background-color:  rgb(231, 172, 62);
+  background-color:  var(--desk);
+  box-shadow: 5px 5px 2px rgba(114, 114, 114, 0.507);
 }
 
 .desk-drop-target {
-  background-color:  rgb(187, 137, 44);
+
+  filter: brightness(0.6);
+}
+
+.desk-restricted {
+  background-color:  rgba(201, 57, 32, 0.568);
 }
 
 .desk-selected {
@@ -248,7 +289,6 @@ body {
 }
 
 .draggable-student {
-  /*className="bg-[rgb(238,238,238)] text-black box-border border border-[rgb(48,48,48)] rounded-sm absolute p-px w-[75%] h-[75%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-5 flex justify-center items-center">*/
   background-color: whitesmoke;
   color: black;
   box-sizing: border-box;
@@ -258,12 +298,12 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 75%;
-  height: 75%;
-  z-index: 5;
-  display: flex;
+  padding: 5px;
+  z-index: 1;
+  display: inline-block;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 
 .student-desk-tag-marker-container {
@@ -288,6 +328,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 2;
 }
 
 .modal-background-closed {
@@ -302,6 +343,7 @@ body {
   border-radius: 5px;
   width: 300px;
   height: 300px;
+  z-index: 3;
 }
 
 .modal-closed {
@@ -321,4 +363,42 @@ body {
 
 .desk-tag-creation-modal .title {
   font-size: large;
+}
+
+.toast-provider {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.toast-close-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 2px;
+  border-radius: 5px;
+  background-color: #2b2b2b27;
+  color: rgb(36, 35, 35);
+  cursor: pointer;
+}
+
+.toast-close-button:hover {
+  background-color: #49494927;
+}
+
+.toast-warning {
+  display: flex;
+  background-color: rgb(226, 202, 65);
+  padding: 5px;
+  border-radius: 5px;
+  color: #171717;
+  gap: 10px;
+  padding: 10px 30px 10px 10px;
+}
+
+.toast-warning h3 {
+  font-weight: bold;
 }

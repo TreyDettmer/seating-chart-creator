@@ -5,9 +5,11 @@ import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
 import DeskEditor from "./desk-editor";
+import { useToast } from "./toast-context";
 
 export default function SeatingConfigEditor() {
     const activeClass = useActiveClass();
+    const toast = useToast()
     const { students: allStudents, seatingConfigurations: allSeatingConfigs, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups, deskTags: allDeskTags } = useAppState();
     const dispatch = useAppDispatch();
     const activeConfig = useActiveSeatingConfig()
@@ -120,7 +122,9 @@ export default function SeatingConfigEditor() {
             }
         }
         if (activeClass.studentIds.length > numberOfAvailableDesks) {
-            console.log("Not enough desks")
+            toast.open(
+                toast.toastWarning("Warning","Not enough desks.")
+            )
             return
         }
 
@@ -145,7 +149,7 @@ export default function SeatingConfigEditor() {
             var hasMovedStudent: boolean = false
             for (let rowIndex = 0; rowIndex < activeConfig.rows; rowIndex++) {
                 for (let colIndex = 0; colIndex < activeConfig.cols; colIndex++) {
-                    if (grid[rowIndex][colIndex].hasDesk && grid[rowIndex][colIndex].studentId == null && grid[rowIndex][colIndex].allowsStudents === false) {
+                    if (grid[rowIndex][colIndex].hasDesk && grid[rowIndex][colIndex].studentId == null && grid[rowIndex][colIndex].allowsStudents === true) {
                         grid[rowIndex][colIndex].studentId = studentIdToMove;
                         grid[focusedCell[0]][focusedCell[1]].studentId = null;
                         hasMovedStudent = true
@@ -313,14 +317,34 @@ export default function SeatingConfigEditor() {
 
         // 2. Keep-together groups
         for (const group of keepTogetherGroups) {
+            if (group.studentIds.length < 2) {
+                continue
+            }
+            if (group.useAnd) {
+                let areAllTogether = true;
+                let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
+                for (let i = 0; i < group.studentIds.length; i++) {
+                    for (let j = i + 1; j < group.studentIds.length; j++) {
+                        const deskA = studentToDesk.get(group.studentIds[i]);
+                        const deskB = studentToDesk.get(group.studentIds[j]);
 
-            for (let i = 0; i < group.studentIds.length; i++) {
-                for (let j = i + 1; j < group.studentIds.length; j++) {
-                    const deskA = studentToDesk.get(group.studentIds[i]);
-                    const deskB = studentToDesk.get(group.studentIds[j]);
+                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB) == false) {
+                            areAllTogether = false
+                        }
+                    }
+                }
+                if (areAllTogether) {
+                    score += TOGETHER_WEIGHT * pairCount;
+                }
+            } else {
+                for (let i = 0; i < group.studentIds.length; i++) {
+                    for (let j = i + 1; j < group.studentIds.length; j++) {
+                        const deskA = studentToDesk.get(group.studentIds[i]);
+                        const deskB = studentToDesk.get(group.studentIds[j]);
 
-                    if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
-                        score += TOGETHER_WEIGHT;
+                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                            score += TOGETHER_WEIGHT;
+                        }
                     }
                 }
             }
@@ -328,12 +352,33 @@ export default function SeatingConfigEditor() {
 
         // 3. Keep-apart groups
         for (const group of keepApartGroups) {
-            for (let i = 0; i < group.studentIds.length; i++) {
-                for (let j = i + 1; j < group.studentIds.length; j++) {
-                    const deskA = studentToDesk.get(group.studentIds[i]);
-                    const deskB = studentToDesk.get(group.studentIds[j]);
-                    if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
-                        score -= APART_PENALTY;
+            if (group.studentIds.length < 2) {
+                continue
+            }
+            if (group.useAnd) {
+                let areAllSeparate = true
+                let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
+                for (let i = 0; i < group.studentIds.length; i++) {
+                    for (let j = i + 1; j < group.studentIds.length; j++) {
+                        const deskA = studentToDesk.get(group.studentIds[i]);
+                        const deskB = studentToDesk.get(group.studentIds[j]);
+                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                            areAllSeparate = false
+                            
+                        }
+                    }
+                }
+                if (areAllSeparate == false) {
+                    score -= APART_PENALTY * pairCount;
+                }
+            } else {
+                for (let i = 0; i < group.studentIds.length; i++) {
+                    for (let j = i + 1; j < group.studentIds.length; j++) {
+                        const deskA = studentToDesk.get(group.studentIds[i]);
+                        const deskB = studentToDesk.get(group.studentIds[j]);
+                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                            score -= APART_PENALTY;
+                        }
                     }
                 }
             }
@@ -342,116 +387,6 @@ export default function SeatingConfigEditor() {
         return score;
     }
 
-
-
-    // function getGridShuffleScore(grid : FloorCell[][], rows : number, cols : number) : ShuffleResult {
-    //     var score : number = 0;
-    //     const keepApartComplianceBonus : number = +1
-    //     const keepTogetherComplianceBonus : number = +1
-    //     const keepApartViolationPenalty : number = -1
-    //     const keepTogetherViolationPenalty : number = -1
-
-    //     if (activeClass === undefined) {
-    //         return {
-    //             grid: grid,
-    //             score: score
-    //         }
-    //     }
-
-    //     // for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
-    //     //     for (let colIndex = 0; colIndex < cols; colIndex++) {
-    //     //         // Ignore cells that don't have a desk and student
-    //     //         if (grid[rowIndex][colIndex].hasDesk == false || grid[rowIndex][colIndex].studentId == null) {
-    //     //             continue
-    //     //         }
-    //     //         const thisStudent : Student | undefined = allStudents[grid[rowIndex][colIndex].studentId!]
-    //     //         const adjacentFloorCells : (FloorCell | null)[] = getAdjacentFloorCells(rowIndex, colIndex, grid, rows, cols)
-
-    //     //         // Check keep apart rules
-    //     //         for (let i = 0; i < keepApartGroups.length; i++) {
-    //     //             const group : KeepApartGroup = keepApartGroups[i]
-    //     //             if (group.studentIds.includes(thisStudent.id) == false) {
-    //     //                 // irrelevant group
-    //     //                 continue;
-    //     //             }
-    //     //             var otherStudentIdsToConsider = group.studentIds.filter(x => x != thisStudent.id);
-    //     //             let studentIdsOfAdjacentCells = adjacentFloorCells.filter(x => x != null).filter(x => x.studentId != null).map(y => y.studentId!)
-    //     //             if (group.useAnd == true) {
-
-    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.every(x => studentIdsOfAdjacentCells.includes(x));
-    //     //                 if (isGroupInAdjacentCells) {
-    //     //                     score += keepApartViolationPenalty
-    //     //                 } else {
-    //     //                     score += keepApartComplianceBonus
-    //     //                 }
-    //     //             } else {
-    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.filter(x => studentIdsOfAdjacentCells.includes(x)).length > 0;
-    //     //                 if (isGroupInAdjacentCells) {
-    //     //                     score += keepApartViolationPenalty
-    //     //                 } else {
-    //     //                     score += keepApartComplianceBonus
-    //     //                 }
-    //     //             }
-    //     //         }
-
-    //     //         // Check keep together rules
-    //     //         for (let i = 0; i < keepTogetherGroups.length; i++) {
-    //     //             const group : KeepTogetherGroup = keepTogetherGroups[i]
-    //     //             if (group.studentIds.includes(thisStudent.id) == false) {
-    //     //                 // irrelevant group
-    //     //                 continue;
-    //     //             }
-    //     //             var otherStudentIdsToConsider = group.studentIds.filter(x => x != thisStudent.id);
-    //     //             let studentIdsOfAdjacentCells = adjacentFloorCells.filter(x => x != null).filter(x => x.studentId != null).map(y => y.studentId!)
-    //     //             if (group.useAnd == true) {
-
-    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.every(x => studentIdsOfAdjacentCells.includes(x));
-    //     //                 if (isGroupInAdjacentCells) {
-    //     //                     score += keepTogetherComplianceBonus
-    //     //                 } else {
-    //     //                     score += keepTogetherViolationPenalty
-    //     //                 }
-    //     //             } else {
-    //     //                 let isGroupInAdjacentCells = otherStudentIdsToConsider.filter(x => studentIdsOfAdjacentCells.includes(x)).length > 0;
-    //     //                 if (isGroupInAdjacentCells) {
-    //     //                     score += keepTogetherComplianceBonus
-    //     //                 } else {
-    //     //                     score += keepTogetherViolationPenalty
-    //     //                 }
-    //     //             }
-    //     //         }
-
-
-    //     //         for (const adjacentCell of adjacentFloorCells) {
-    //     //             if (adjacentCell === null) {
-    //     //                 continue
-    //     //             }
-    //     //             if (adjacentCell.hasDesk == false || adjacentCell.studentId == null) {
-    //     //                 continue
-    //     //             }
-    //     //         }
-
-    //     //     }
-    //     // }
-    //     return {
-    //         grid: grid,
-    //         score: score
-    //     }
-    // }
-
-
-
-    // function getAdjacentFloorCells(givenRow : number, givenCol : number, floorCells : FloorCell[][], rows : number, cols : number) : (FloorCell | null)[] {
-    //     var leftCell : FloorCell | null = givenCol > 0 ? floorCells[givenRow][givenCol - 1] : null
-    //     var rightCell : FloorCell | null = givenCol < cols - 1 ? floorCells[givenRow][givenCol + 1] : null
-    //     var upperCell : FloorCell | null = givenRow > 0 ? floorCells[givenRow - 1][givenCol]: null
-    //     var lowerCell : FloorCell | null = givenRow < rows - 1 ? floorCells[givenRow + 1][givenCol] : null
-    //     var upperLeftCell : FloorCell | null = givenCol > 0 && givenRow > 0 ? floorCells[givenRow - 1][givenCol - 1] : null
-    //     var upperRightCell : FloorCell | null = givenCol < cols - 1 && givenRow > 0 ? floorCells[givenRow - 1][givenCol + 1] : null
-    //     var lowerLeftCell : FloorCell | null = givenCol > 0 && givenRow < rows - 1 ? floorCells[givenRow + 1][givenCol - 1] : null
-    //     var lowerRightCell : FloorCell | null = givenCol < cols - 1 && givenRow < rows - 1 ? floorCells[givenRow + 1][givenCol + 1] : null
-    //     return [leftCell, rightCell, upperCell, lowerCell, upperLeftCell, upperRightCell, lowerLeftCell, lowerRightCell]
-    // }
 
     function getAdjacentFloorCells(givenCell: FloorCell, floorCells: FloorCell[][], rows: number, cols: number): (FloorCell | null)[] {
         var leftCell: FloorCell | null = givenCell.column > 0 ? floorCells[givenCell.row][givenCell.column - 1] : null
@@ -472,17 +407,17 @@ export default function SeatingConfigEditor() {
                 <SeatingConfigList></SeatingConfigList>
             </div>
 
-            <div id="configEditor" className="flex flex-row bg-green-300 grow h-full w-full">
-                <div id="temp-container" className="h-full">
+            <div className="flex flex-row grow h-full w-full">
+                <div className="h-full">
                     <DragDropProvider
                         onDragStart={() => { }}
                         onDragMove={() => { }}
                         onDragOver={() => { }}
                         onDragEnd={onDragEnd}>
-                        <div id="grid-container" className="relative w-[800px] h-[800px] overflow-scroll">
+                        <div id="grid-container" className="classroom">
                             {activeConfig ? (
 
-                                <div id="grid" className="w-[800px] h-[800px] aspect-square grid absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                                <div id="grid" className="classroom-floor-grid"
                                     style={{
                                         gridTemplateColumns: `repeat(${activeConfig.cols}, minmax(0, 1fr))`,
                                         gridTemplateRows: `repeat(${activeConfig.rows}, minmax(0, 1fr))`,

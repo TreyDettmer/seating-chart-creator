@@ -50,7 +50,8 @@ export type AppAction =
       cellB: { row: number; col: number };
     };
   }
-  | { type: 'CREATE_DESK_TAG'; payload: { configId: string; row: number; col: number; deskTag: DeskTag } }
+  | { type: 'CREATE_DESK_TAG'; payload: { deskTag: DeskTag; configId: string | undefined; row: number | undefined; col: number | undefined; } }
+  | { type: 'EDIT_DESK_TAG'; payload: { tagId: string; deskTag: DeskTag } }
   | { type: 'DELETE_DESK_TAG'; payload: { tagId: string } }
   | { type: 'TOGGLE_CELL_ALLOWS_STUDENTS'; payload: { configId: string; row: number; col: number; allowsStudents: boolean } }
   | { type: 'ADD_DESK_TAG_TO_CELL'; payload: { tagId: string; configId: string; row: number; col: number; } }
@@ -542,8 +543,13 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const newGrid = config.grid.map((r) => r.slice());
       const a = newGrid[cellA.row][cellA.col];
       const b = newGrid[cellB.row][cellB.col];
+
       newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents, deskTagIds: b.deskTagIds };
       newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents, deskTagIds: a.deskTagIds };
+      if (a.hasDesk && a.studentId == null && b.hasDesk == false && b.studentId != null && a.allowsStudents) {
+        newGrid[cellA.row][cellA.col] = { ...a, studentId: null, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents, deskTagIds: b.deskTagIds };
+        newGrid[cellB.row][cellB.col] = { ...b, studentId: b.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents, deskTagIds: a.deskTagIds };
+      }
 
       return {
         ...state,
@@ -560,6 +566,15 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'CREATE_DESK_TAG': {
       const { deskTag, configId, row, col } = action.payload;
+      if (configId === undefined || row === undefined || col === undefined) {
+        return {
+        ...state,
+        deskTags: {
+          ...state.deskTags,
+          [deskTag.id]: deskTag
+        },
+      };
+      }
       const config = state.seatingConfigurations[configId];
       if (!config) return state;
 
@@ -583,6 +598,21 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ...state.seatingConfigurations,
           [configId]: { ...config, grid: newGrid },
         },
+      };
+    }
+
+    case 'EDIT_DESK_TAG': {
+      const { tagId, deskTag} = action.payload;
+      return {
+        ...state,
+        deskTags: {
+          ...state.deskTags,
+          [tagId]: {
+            ...state.deskTags[tagId],
+            color: deskTag.color,
+            name: deskTag.name
+          }
+        }
       };
     }
 

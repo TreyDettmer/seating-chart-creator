@@ -48,7 +48,9 @@ export default function DraggableDeskComponent(
         if (activeConfig.selectedCell != null && activeConfig.selectedCell.col == props.cellCol && activeConfig.selectedCell.row == props.cellRow) {
             name += ' desk-selected'
         }
-
+        if (activeConfig.grid[props.cellRow][props.cellCol].allowsStudents == false) {
+            name += ' desk-restricted'
+        }
         return name
     }
 
