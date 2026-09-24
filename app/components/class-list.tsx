@@ -1,3 +1,4 @@
+import "../styles/class-list.css";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
 import { v4 as uuid } from 'uuid'
 
@@ -30,10 +31,10 @@ export default function ClassListComponent(
             <ul className="flex flex-row">
                 {Object.values(classes).map(x => {
                     return (
-                        <button onClick={() => handleSwitchClass(x.id)} className={`h-full pl-3 pr-3 hover:bg-gray-100 hover:cursor-pointer ${x.id === activeClass?.id ? "font-bold text-black border-b-2" : "text-gray-400"}`} key={x.id}>{x.name}</button>
+                        <button onClick={() => handleSwitchClass(x.id)} className={`class-list-button ${x.id === activeClass?.id ? "class-list-button-current" : ""}`} key={x.id}>{x.name}</button>
                     )
                 })}
-                <button className={`h-full pl-3 pr-3 hover:bg-gray-100 hover:cursor-pointer text-gray-400`} onClick={handleAddClass} >Add Class</button>
+                <button className={`class-list-button`} onClick={handleAddClass} >Add Class</button>
             </ul>
         </div>
     )

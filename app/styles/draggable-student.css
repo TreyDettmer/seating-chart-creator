@@ -1,0 +1,30 @@
+@import '../globals.css';
+
+.draggable-student {
+  background-color: whitesmoke;
+  color: black;
+  box-sizing: border-box;
+  border: 1px solid gray;
+  border-radius: 5px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 5px;
+  z-index: 1;
+  display: inline-block;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.student-desk-tag-marker-container {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+}

@@ -1,3 +1,4 @@
+import "../styles/class-editor.css";
 import { useState } from "react";
 import { useActiveClass } from "../app-context";
 import ClassStudentList from "./class-student-list";
@@ -12,12 +13,12 @@ export default function ClassEditor() {
     const [selectedTab, setSelectedTab] = useState("Students")
 
     return (
-        <div className="flex flex-row grow bg-gray-50">
-            <div>
+        <div className="class-editor">
+            <div className="class-editor-sidebar">
                 <div className="flex flex-row bg-blue-500 h-[40px]">
-                    <button onClick={() => setSelectedTab("Students")} className={`tab-button ${selectedTab === "Students" ? "tab-button-current" : ""}`}>Students</button>
-                    <button onClick={() => setSelectedTab("Rules")} className={`tab-button ${selectedTab === "Rules" ? "tab-button-current" : ""}`}>Rules</button>
-                    <button onClick={() => setSelectedTab("Tags")} className={`tab-button ${selectedTab === "Tags" ? "tab-button-current" : ""}`}>Tags</button>
+                    <button onClick={() => setSelectedTab("Students")} className={`tab ${selectedTab === "Students" ? "tab-current" : ""}`}>Students</button>
+                    <button onClick={() => setSelectedTab("Rules")} className={`tab ${selectedTab === "Rules" ? "tab-current" : ""}`}>Rules</button>
+                    <button onClick={() => setSelectedTab("Tags")} className={`tab ${selectedTab === "Tags" ? "tab-current" : ""}`}>Tags</button>
                 </div>
                 <div>
                     {selectedTab == "Students" && <ClassStudentList></ClassStudentList>}

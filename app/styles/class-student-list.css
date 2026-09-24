@@ -1,0 +1,44 @@
+@import '../globals.css';
+
+.student-list-table-container {
+  overflow: auto;
+}
+
+.student-list-table {
+  min-width: 350px;
+}
+
+.student-list-table th {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 5px;
+  border: 2px solid var(--foreground);
+  font-weight: bold;
+  
+}
+.student-list-table td {
+  background: var(--background);
+  color: var(--foreground);
+  padding: 5px;
+  border: 2px solid var(--foreground);
+}
+
+.student-list-table td input {
+  min-width: 50px;
+  max-width: 100%;
+
+  field-sizing: content;
+}
+
+.student-list-table tr {
+  padding: 5px;
+}
+
+.student-list-actions-container {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}

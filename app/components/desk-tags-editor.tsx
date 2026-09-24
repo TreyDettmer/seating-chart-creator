@@ -1,3 +1,4 @@
+import "../styles/desk-tags-editor.css";
 import { useState } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
 import { DeskTag } from "../app-state";
@@ -93,7 +94,7 @@ export default function DeskTagsEditor() {
                     return <li className="desk-tags-editor-row" key={tagId}>
                         <input type="color" value={deskTag.color} onChange={(e) => onDeskTagColorChanged(tagId, e.target.value)}></input>
                         <input className="modal-text-input" value={deskTag.name} onChange={(e) => onDeskTagNameChanged(tagId, e.target.value)}></input>
-                        <button className="class-rules-editor-remove-group-button" onClick={() => onDeleteDeskTag(tagId)}>X</button>
+                        <button className="desk-tags-editor-remove-group-button" onClick={() => onDeleteDeskTag(tagId)}>X</button>
                     </li>
 
                 })}

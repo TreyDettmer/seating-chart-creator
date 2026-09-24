@@ -1,0 +1,53 @@
+@import '../globals.css';
+
+.config-editor {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  border: 1px solid pink;
+}
+
+.config-editor-classroom-and-desk-editor-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  
+}
+
+.config-editor-actions-panel {
+  /* height: 150px; */
+  /* background-color: var(--background); */
+  color: var(--foreground);
+}
+
+.config-list-container {
+  display: flex;
+  flex-direction: row;
+  height: 40px;
+  border: 1px solid rgb(0, 140, 221);
+}
+
+.classroom-and-actions-container {
+  height: 100%;
+  flex: 1;
+}
+
+.classroom {
+  background-color: rgb(92, 128, 134);
+  position: relative;
+  width: 800px;
+  height: 800px;
+  aspect-ratio: 1 / 1;
+  overflow: scroll;
+}
+
+.classroom-floor-grid {
+  height: 90%;
+  background-color: yellowgreen;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

@@ -1,3 +1,4 @@
+import "../styles/seating-config-list.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
 import { FloorCell, SeatingConfiguration } from "../app-state"
 import { MouseEvent } from "react"
@@ -85,25 +86,23 @@ export default function SeatingConfigList(
 
 
     return (
-        <div>
-            <ul className="flex flex-row h-full bg-white">
-                {seatingConfigs.map(x => {
-                    return (
-                          /* className={`h-full pl-3 pr-3 hover:bg-gray-100 hover:cursor-pointer ${x.id === props.activeConfigurationId ? "font-bold text-black border-b-2" : "text-gray-400"}`}  */
-
-                        <div className={`seating-config-button ${x.id === activeConfigurationId ? "seating-config-button-current" : ""}`} onClick={() => onConfigurationClicked(x.id)} key={x.id}>
-                            
-                            <div>
-                                {x.name}
-                            </div>
-                            <button onClick={(e) => onOptionsButtonClicked(e, x.id)} className="seating-config-button-option-button">
-                                :
-                            </button>
+        
+        <ul className="seating-config-list">
+            {seatingConfigs.map(x => {
+                return (
+                    <div className={`seating-config-button ${x.id === activeConfigurationId ? "seating-config-button-current" : ""}`} onClick={() => onConfigurationClicked(x.id)} key={x.id}>
+                        
+                        <div>
+                            {x.name}
                         </div>
-                    )
-                })}
-                <button onClick={() => onAddConfigClicked()} className={`h-full pl-3 pr-3 text-black hover:bg-gray-100 hover:cursor-pointer `}>Add Seating Configuration</button>
-            </ul>
-        </div>
+                        <button onClick={(e) => onOptionsButtonClicked(e, x.id)} className="seating-config-button-option-button">
+                            :
+                        </button>
+                    </div>
+                )
+            })}
+            <button onClick={() => onAddConfigClicked()} className={`seating-config-button`}>Add Seating Configuration</button>
+        </ul>
+        
     )
 }

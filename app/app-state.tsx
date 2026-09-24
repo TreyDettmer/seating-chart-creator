@@ -112,6 +112,8 @@ export interface Student {
   firstName: string;
   lastName: string;
   gender: number;
+  isEsl: boolean;
+  iepDesc: string;
   deskTagIds: string[];
 }
 

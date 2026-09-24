@@ -8,7 +8,7 @@ export default function Dashboard() {
 
     return (
         <ToastProvider>
-            <div className="grow flex flex-col">
+            <div className="dashboard">
                 <ClassListComponent />
                 {activeClass && <ClassEditor />}
             </div>

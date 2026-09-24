@@ -1,10 +1,10 @@
+import "../styles/desk-editor.css";
 import { ChangeEventHandler, useState } from "react";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
 import { DeskTag, CustomOption, SelectOption, DeskTagSelectOption, deskTagColorDot } from "../app-state";
 import Modal from "./modal";
 import { v4 as uuid } from 'uuid'
 import Select, { ActionMeta, MultiValue, SingleValue, StylesConfig } from 'react-select'
-import chroma from "chroma-js";
 
 export default function DeskEditor() {
 

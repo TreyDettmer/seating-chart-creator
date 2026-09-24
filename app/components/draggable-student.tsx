@@ -1,4 +1,4 @@
-
+import "../styles/draggable-student.css";
 import { useDraggable } from "@dnd-kit/react"
 import { MouseEvent } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context"

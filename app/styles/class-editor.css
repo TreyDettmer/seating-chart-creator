@@ -1,0 +1,32 @@
+@import '../globals.css';
+
+.class-editor {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  background-color: var(--background);
+}
+
+.class-editor-sidebar {
+    width: 500px;
+}
+
+.tab {
+  background: var(--background);
+  color: var(--foreground);
+  height: 100%;
+  padding: 5px 15px 5px 15px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.tab-current {
+  border-bottom: 2px solid var(--foreground);
+  font-weight: bold;
+}
+
+.tab:hover {
+  background: var(--background2);
+}

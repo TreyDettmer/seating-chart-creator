@@ -1,0 +1,75 @@
+@import '../globals.css';
+
+
+
+.class-rules-editor {
+  background: var(--background);
+  color: var(--foreground);
+  width: 500px;
+}
+
+
+.class-rules-editor-header {
+  font-size: x-large;
+  font-weight: bold;
+}
+
+
+.class-rules-group-container {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  padding: 0px 0px 20px 0px;
+}
+
+.class-rules-editor-select {
+  width: 300px;
+}
+
+.class-rules-editor-select-operation-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 5px 0px 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.class-rules-editor-select-operation {
+  width: 100px;
+}
+
+.class-rules-editor .selectable-option {
+  color: var(--background2);
+}
+
+.class-rules-editor-remove-group-button {
+  background: var(--background);
+  color: var(--foreground);
+  padding: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.class-rules-editor-remove-group-button:hover {
+  background: var(--background2);
+}
+
+.desk-tag-students-header {
+  width: 500px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 5px 10px 5px 10px;
+  border-bottom: 2px solid var(--foreground);
+  font-weight: bold;
+}
+
+.desk-tag-students-row {
+  width: 500px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 5px 10px 5px 10px;
+  /* border-bottom: 2px solid var(--foreground); */
+}
+

@@ -1,0 +1,14 @@
+@import '../globals.css';
+
+.desk-editor {
+  /* width: 100%; */
+  background-color: var(--background);
+}
+
+.desk-editor .selectable-option {
+  color: var(--background2);
+}
+
+.desk-editor-tag-select {
+  width: 300px;
+}

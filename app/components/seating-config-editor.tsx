@@ -1,3 +1,4 @@
+import "../styles/seating-config-editor.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
 import { FloorCell, KeepApartGroup, KeepTogetherGroup, SeatingConfiguration, ShuffleResult, Student } from "../app-state";
 
@@ -402,22 +403,22 @@ export default function SeatingConfigEditor() {
 
 
     return (
-        <div className="flex flex-col grow border-l">
-            <div id="config-list-container" className="flex flex-row bg-blue-500 h-[40px]">
+        <div className="config-editor">
+            <div className="config-list-container">
                 <SeatingConfigList></SeatingConfigList>
             </div>
 
-            <div className="flex flex-row grow h-full w-full">
-                <div className="h-full">
+            <div className="config-editor-classroom-and-desk-editor-container">
+                <div className="classroom-and-actions-container">
                     <DragDropProvider
                         onDragStart={() => { }}
                         onDragMove={() => { }}
                         onDragOver={() => { }}
                         onDragEnd={onDragEnd}>
-                        <div id="grid-container" className="classroom">
+                        <div className="classroom">
                             {activeConfig ? (
 
-                                <div id="grid" className="classroom-floor-grid"
+                                <div className="classroom-floor-grid"
                                     style={{
                                         gridTemplateColumns: `repeat(${activeConfig.cols}, minmax(0, 1fr))`,
                                         gridTemplateRows: `repeat(${activeConfig.rows}, minmax(0, 1fr))`,
@@ -431,7 +432,7 @@ export default function SeatingConfigEditor() {
                                 </div>) : (null)}
                         </div>
                     </DragDropProvider>
-                    <div id="shuffle-options" className="bg-yellow-300 h-[150px]">
+                    <div className="config-editor-actions-panel">
                         <button onClick={onShuffleStudents} className="default-button">Shuffle Students</button>
                         <button onClick={onAddDesk} className="default-button">Add Desk</button>
                     </div>

@@ -1,0 +1,21 @@
+@import '../globals.css';
+
+.class-list-button {
+  background: var(--background);
+  color: var(--foreground);
+  height: 100%;
+  padding: 5px 15px 5px 15px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.class-list-button-current {
+  border-bottom: 2px solid var(--foreground);
+  font-weight: bold;
+}
+
+.class-list-button:hover {
+  background: var(--background2);
+}

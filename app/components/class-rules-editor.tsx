@@ -1,3 +1,4 @@
+import "../styles/class-rules-editor.css";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
 import { CustomOption, deskTagColorDot, KeepApartGroup, KeepTogetherGroup, SelectOption, Student } from "../app-state";
 import Select, { ActionMeta, MultiValue, SingleValue } from 'react-select'

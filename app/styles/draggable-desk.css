@@ -1,0 +1,49 @@
+@import '../globals.css';
+
+.desk {
+  background-color: var(--desk);
+  box-sizing: border-box;
+  border: 1px solid rgba(75, 75, 75, 0.603);
+  border-radius: 5px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 95%;
+  height: 95%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  box-shadow: 2px 2px 2px rgba(114, 114, 114, 0.507);
+}
+
+.desk-desk-tag-marker-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+}
+
+.desk-desk-tag-marker {
+  width: 20%;
+  height: 10%;
+}
+
+.desk-dragging {
+  background-color:  var(--desk);
+  box-shadow: 5px 5px 2px rgba(114, 114, 114, 0.507);
+}
+
+.desk-drop-target {
+
+  filter: brightness(0.6);
+}
+
+.desk-restricted {
+  background-color:  rgba(201, 57, 32, 0.568);
+}
+
+.desk-selected {
+  border: 3px solid black;
+  width: 97%;
+  height: 97%;
+}
