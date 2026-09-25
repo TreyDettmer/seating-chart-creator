@@ -4,30 +4,39 @@ import { useActiveClass } from "../app-context";
 import ClassStudentList from "./class-student-list";
 import SeatingConfigEditor from "./seating-config-editor";
 import ClassRulesEditor from "./class-rules-editor";
-import DeskEditor from "./desk-editor";
 import DeskTagsEditor from "./desk-tags-editor";
+import GroupsEditor from "./groups-editor";
 
 export default function ClassEditor() {
     const activeClass = useActiveClass();
 
-    const [selectedTab, setSelectedTab] = useState("Students")
+    const [selectedSidebarTab, setSelectedSidebarTab] = useState("Students")
+    const [selectedEditorTab, setSelectedEditorTab] = useState("Seating Chart")
 
     return (
         <div className="class-editor">
             <div className="class-editor-sidebar">
-                <div className="flex flex-row bg-blue-500 h-[40px]">
-                    <button onClick={() => setSelectedTab("Students")} className={`tab ${selectedTab === "Students" ? "tab-current" : ""}`}>Students</button>
-                    <button onClick={() => setSelectedTab("Rules")} className={`tab ${selectedTab === "Rules" ? "tab-current" : ""}`}>Rules</button>
-                    <button onClick={() => setSelectedTab("Tags")} className={`tab ${selectedTab === "Tags" ? "tab-current" : ""}`}>Tags</button>
+                <div className="class-editor-sidebar-tabs-container">
+                    <button onClick={() => setSelectedSidebarTab("Students")} className={`sidebar-tab ${selectedSidebarTab === "Students" ? "sidebar-tab-current" : ""}`}>Students</button>
+                    <button onClick={() => setSelectedSidebarTab("Rules")} className={`sidebar-tab ${selectedSidebarTab === "Rules" ? "sidebar-tab-current" : ""}`}>Rules</button>
+                    <button onClick={() => setSelectedSidebarTab("Tags")} className={`sidebar-tab ${selectedSidebarTab === "Tags" ? "sidebar-tab-current" : ""}`}>Tags</button>
                 </div>
                 <div>
-                    {selectedTab == "Students" && <ClassStudentList></ClassStudentList>}
-                    {selectedTab == "Rules" && <ClassRulesEditor></ClassRulesEditor>}
-                    {selectedTab == "Tags" && <DeskTagsEditor></DeskTagsEditor>}  
+                    {selectedSidebarTab == "Students" && <ClassStudentList></ClassStudentList>}
+                    {selectedSidebarTab == "Rules" && <ClassRulesEditor></ClassRulesEditor>}
+                    {selectedSidebarTab == "Tags" && <DeskTagsEditor></DeskTagsEditor>}  
                 </div>
                 
             </div>
-            <SeatingConfigEditor></SeatingConfigEditor>
+            <div className="editors-container">
+                <div className="editors-tabs-container">
+                    <button onClick={() => setSelectedEditorTab("Seating Chart")} className={`sidebar-tab ${selectedEditorTab === "Seating Chart" ? "sidebar-tab-current" : ""}`}>Seating Chart</button>
+                    <button onClick={() => setSelectedEditorTab("Groups")} className={`sidebar-tab ${selectedEditorTab === "Groups" ? "sidebar-tab-current" : ""}`}>Groups</button>
+                </div>
+                {selectedEditorTab == "Seating Chart" && <SeatingConfigEditor></SeatingConfigEditor>}
+                {selectedEditorTab == "Groups" && <GroupsEditor></GroupsEditor>}
+            </div>
+            
         </div>
     )
 }

@@ -2,7 +2,7 @@
 
 import { createContext, ReactNode, useContext, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { FiAlertCircle } from "react-icons/fi";
+import { FiAlertCircle, FiAlertOctagon } from "react-icons/fi";
 
 interface Toast {
     id: string;
@@ -12,7 +12,8 @@ interface Toast {
 interface ToastContextValue {
     open: (component: ReactNode, timeout?: number) => string;
     close: (id: string) => void;
-    toastWarning: (headerText : string, bodyText : string) => ReactNode
+    toastWarning: (headerText : string, bodyText : string) => ReactNode;
+    toastError: (headerText : string, bodyText : string) => ReactNode;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -43,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
     const toastWarning = (headerText : string, bodyText : string = "") : ReactNode => {
         return (
-            <div className="toast-warning">
+            <div className="toast toast-warning">
                 <FiAlertCircle size={40}></FiAlertCircle>
                 <div>
                     <h3>{headerText}</h3>
@@ -53,8 +54,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         )
     }
 
+    const toastError = (headerText : string, bodyText : string = "") : ReactNode => {
+        return (
+            <div className="toast toast-error">
+                <FiAlertOctagon size={40}></FiAlertOctagon>
+                <div>
+                    <h3>{headerText}</h3>
+                    <p>{bodyText}</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
-        <ToastContext.Provider value={{ open, close, toastWarning }}>
+        <ToastContext.Provider value={{ open, close, toastWarning, toastError }}>
             {children}
             <div className="toast-provider">
                 {toasts.map(({ id, component }) => (

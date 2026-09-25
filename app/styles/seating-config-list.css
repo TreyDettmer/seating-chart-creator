@@ -41,3 +41,7 @@
   vertical-align:middle;
   z-index: 1;
 }
+
+.seating-config-edit-modal {
+  padding: 10px;
+}

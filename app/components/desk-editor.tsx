@@ -1,4 +1,5 @@
 import "../styles/desk-editor.css";
+import "../styles/modal.css";
 import { ChangeEventHandler, useState } from "react";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
 import { DeskTag, CustomOption, SelectOption, DeskTagSelectOption, deskTagColorDot } from "../app-state";
@@ -140,7 +141,7 @@ export default function DeskEditor() {
             </ul>
             <button onClick={onDeleteDesk} className="default-button destructive" >Delete Desk</button>
             <Modal open={openTagCreationModal} onClose={onCloseDeskTagCreationModal}>
-                <div className="desk-tag-creation-modal">
+                <div>
                     <div className="flex flex-row justify-center">
                         <p className="title">Desk Tag Creator</p>
                     </div>

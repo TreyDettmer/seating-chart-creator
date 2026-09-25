@@ -1,0 +1,5 @@
+@import '../globals.css';
+
+.selectable-option {
+  color: var(--background2);
+}

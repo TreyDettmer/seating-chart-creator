@@ -1,0 +1,45 @@
+@import '../globals.css';
+
+
+.modal-background-open {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.185);
+  background-color: rgb(from var(--background) r g b / 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.modal-background-closed {
+  display: none;
+
+}
+
+.modal-open {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 2px solid black;
+  border-radius: 5px;
+  box-sizing: content-box;
+  z-index: 3;
+}
+
+.modal-closed {
+  display: none
+}
+
+.modal-text-input {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 2px solid var(--foreground2);
+  border-radius: 5px;
+}
+
+.modal-open .title {
+  font-size: large;
+}

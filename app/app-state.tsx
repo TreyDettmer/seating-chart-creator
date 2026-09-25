@@ -13,7 +13,7 @@ export type AppAction =
   | { type: 'TOGGLE_SELECTED_CELL'; payload: { configId: string; cell: { row: number, col: number } | null } }
   | { type: 'ADD_SEATING_CONFIG'; payload: { classId: string; config: SeatingConfiguration }; }
   | { type: 'REMOVE_SEATING_CONFIG'; payload: { classId: string; configId: string }; }
-  | { type: 'UPDATE_SEATING_CONFIG_GRID'; payload: { configId: string; newGrid : FloorCell[][] }; }
+  | { type: 'UPDATE_SEATING_CONFIG'; payload: { configId: string; newConfig: SeatingConfiguration }; }
   | { type: 'ADD_KEEP_APART_GROUP'; payload: { classId: string; group: KeepApartGroup } }
   | { type: 'REMOVE_KEEP_APART_GROUP'; payload: { classId: string; groupId: string } }
   | { type: 'EDIT_KEEP_APART_GROUP'; payload: { classId: string; groupId: string; group: KeepApartGroup } }
@@ -62,6 +62,7 @@ export type AppAction =
   | { type: 'REMOVE_DESK_TAG_FROM_STUDENT'; payload: { tagId: string; classId: string; student: Student } }
   | { type: 'REMOVE_DESK'; payload: { configId: string; row: number; col: number; } }
   | { type: 'ADD_DESK'; payload: { configId: string; } }
+  | { type: 'EDIT_SHUFFLE_PREFERENCES'; payload: { updatedPreferences: ShufflePreferences; } }
 
 export const CustomOption = (props: any) => {
   return (
@@ -95,8 +96,31 @@ export interface ShuffleResult {
   score: number
 }
 
+export interface ShufflePreferences {
+  iterations : number;
+  explorationStrengthStart : number;
+  explorationStrengthEnd : number;
+  ignoreKeepApartGroups : boolean;
+  ignoreKeepTogetherGroups : boolean;
+  ignoreDeskTags : boolean;
+}
+
+export const initialShufflePreferences: ShufflePreferences = {
+  iterations: 8000,
+  explorationStrengthStart: 10.0,
+  explorationStrengthEnd: 0.01,
+  ignoreKeepApartGroups: false,
+  ignoreKeepTogetherGroups: false,
+  ignoreDeskTags: false,
+};
+
 export interface SelectOption {
   value: string;
+  label: string;
+}
+
+export interface SelectNumberOption {
+  value: number;
   label: string;
 }
 
@@ -111,16 +135,23 @@ export interface Student {
   id: string;
   firstName: string;
   lastName: string;
-  gender: number;
+  gender: Gender;
   isEsl: boolean;
   iepDesc: string;
   deskTagIds: string[];
+  nameAbbr: string;
+}
+
+export enum Gender {
+  Boy = "Boy",
+  Girl = "Girl",
+  Other = "Other"
 }
 
 export interface StudentCsvRow {
   FirstName: string;
   LastName: string;
-  Gender: number;
+  Gender: Gender;
 }
 
 export interface KeepApartGroup {
@@ -156,22 +187,25 @@ export interface AppState {
   students: Record<string, Student>;
   classes: Record<string, SchoolClass>;
   seatingConfigurations: Record<string, SeatingConfiguration>;
+  groupsConfigurations: Record<string, GroupsConfiguration>;
   keepApartGroups: Record<string, KeepApartGroup>;
   keepTogetherGroups: Record<string, KeepTogetherGroup>;
   deskTags: Record<string, DeskTag>;
   activeClassId: string | null;
+  shufflePreferences : ShufflePreferences;
 }
 export const initialAppState: AppState = {
   students: {},
   classes: {},
   seatingConfigurations: {},
+  groupsConfigurations: {},
   keepApartGroups: {},
   keepTogetherGroups: {},
   deskTags: {},
-  activeClassId: null
+  activeClassId: null,
+  shufflePreferences: initialShufflePreferences
 };
 
-// A class can have multiple SeatingChartStates, each representing a different layout of desks
 export interface SeatingConfiguration {
   id: string;
   classId: string;
@@ -182,6 +216,18 @@ export interface SeatingConfiguration {
   selectedCell: { row: number, col: number } | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface GroupsConfiguration {
+  id: string;
+  classId: string;
+  name: string;
+}
+
+export interface StudentGroup {
+  id: string;
+  name: string;
+  studentIds: string[];
 }
 
 export interface FloorCell {
@@ -255,6 +301,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { classId, students } = action.payload;
       const cls = state.classes[classId];
       if (!cls) return state;
+
+      // Abbreviate student names
+      //const studentsWithAbbreviatedNames = populateAbbrNames(students)
+
+
       return {
         ...state,
         students: { ...state.students, ...students },
@@ -341,19 +392,16 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case 'UPDATE_SEATING_CONFIG_GRID': {
-      const { configId, newGrid} = action.payload;
-      const config = state.seatingConfigurations[configId];
-      if (!config) return state;
+    case 'UPDATE_SEATING_CONFIG': {
+      const { configId, newConfig} = action.payload;
 
       return {
         ...state,
         seatingConfigurations: {
           ...state.seatingConfigurations,
-          [configId]: { ...config, grid: newGrid },
+          [configId]: newConfig,
         },
       };
-
     }
 
     case 'ADD_KEEP_APART_GROUP': {
@@ -860,7 +908,63 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
+    case 'EDIT_SHUFFLE_PREFERENCES': {
+      const { updatedPreferences } = action.payload;
+      return {
+        ...state,
+        shufflePreferences: updatedPreferences
+      };
+    }
+
     default:
       return state;
   }
+}
+
+
+
+
+function populateAbbrNames(
+  students: Record<string, Student>
+): Record<string, Student> {
+  // Group student IDs by first name
+  const groups = new Map<string, string[]>();
+  for (const [id, student] of Object.entries(students)) {
+    const group = groups.get(student.firstName);
+    if (group) {
+      group.push(id);
+    } else {
+      groups.set(student.firstName, [id]);
+    }
+  }
+
+  const result: Record<string, Student> = {};
+
+  for (const [firstName, ids] of groups) {
+    if (ids.length === 1) {
+      // First name alone is already unique
+      const id = ids[0];
+      result[id] = { ...students[id], nameAbbr: firstName };
+      continue;
+    }
+
+    const lastNames = ids.map(id => students[id].lastName);
+    const maxLen = Math.max(...lastNames.map(l => l.length));
+
+    // Find smallest prefix length that makes all last names distinct
+    let k = 1;
+    while (k < maxLen) {
+      const prefixes = lastNames.map(l => l.slice(0, k));
+      if (new Set(prefixes).size === prefixes.length) break;
+      k++;
+    }
+
+    for (const id of ids) {
+      const shortLast = students[id].lastName.slice(0, k);
+      const nameAbbr = shortLast ? `${firstName} ${shortLast}` : firstName;
+      result[id] = { ...students[id], nameAbbr };
+    }
+  }
+
+  return result;
 }

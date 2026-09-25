@@ -15,14 +15,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* @media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --background2:rgb(43, 43, 43);
     --foreground: #ededed;
     --foreground2: #c0c0c0;
   }
-} */
+}
 
 body {
   background: var(--background);
@@ -55,87 +55,6 @@ body {
   background: var(--background2);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.modal-background-open {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.185);
-  background-color: rgb(from var(--background) r g b / 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2;
-}
-
-.modal-background-closed {
-  display: none;
-
-}
-
-.modal-open {
-  background-color: var(--background);
-  color: var(--foreground);
-  border: 2px solid black;
-  border-radius: 5px;
-  width: 300px;
-  height: 300px;
-  z-index: 3;
-}
-
-.modal-closed {
-  display: none
-}
-
-.modal-text-input {
-  background-color: var(--background);
-  color: var(--foreground);
-  border: 2px solid var(--foreground2);
-  border-radius: 5px;
-}
-
-.desk-tag-creation-modal {
-  padding: 5px;
-}
-
-.desk-tag-creation-modal .title {
-  font-size: large;
-}
-
 .toast-provider {
   position: absolute;
   right: 20px;
@@ -160,6 +79,10 @@ body {
   background-color: #49494927;
 }
 
+.toast h3 {
+  font-weight: bold;
+}
+
 .toast-warning {
   display: flex;
   background-color: rgb(226, 202, 65);
@@ -170,6 +93,13 @@ body {
   padding: 10px 30px 10px 10px;
 }
 
-.toast-warning h3 {
-  font-weight: bold;
+.toast-error {
+  display: flex;
+  background-color: rgb(218, 52, 52);
+  padding: 5px;
+  border-radius: 5px;
+  color: #171717;
+  gap: 10px;
+  padding: 10px 30px 10px 10px;
 }
+

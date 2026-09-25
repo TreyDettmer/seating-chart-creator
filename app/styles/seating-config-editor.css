@@ -51,3 +51,12 @@
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+.shuffle-preferences-modal {
+
+}
+
+.shuffle-preference-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}

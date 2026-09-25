@@ -1,17 +1,21 @@
 import "../styles/seating-config-editor.css";
+import "../styles/modal.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { FloorCell, KeepApartGroup, KeepTogetherGroup, SeatingConfiguration, ShuffleResult, Student } from "../app-state";
+import { FloorCell, KeepApartGroup, KeepTogetherGroup, SeatingConfiguration, ShufflePreferences, ShuffleResult, Student } from "../app-state";
 
 import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
 import DeskEditor from "./desk-editor";
 import { useToast } from "./toast-context";
+import Modal from "./modal";
+import { useState } from "react";
 
 export default function SeatingConfigEditor() {
     const activeClass = useActiveClass();
     const toast = useToast()
-    const { students: allStudents, seatingConfigurations: allSeatingConfigs, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups, deskTags: allDeskTags } = useAppState();
+    const { students: allStudents, seatingConfigurations: allSeatingConfigs, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups, deskTags: allDeskTags, shufflePreferences } = useAppState();
+    const [isModalOpen, setIsModalOpen] = useState(false)
     const dispatch = useAppDispatch();
     const activeConfig = useActiveSeatingConfig()
     const PREFERENCE_WEIGHT = 10; // reward: student seated at a desk that tags them
@@ -109,7 +113,6 @@ export default function SeatingConfigEditor() {
     }
 
     function onShuffleStudents() {
-        const iterations = 100, startTemp = 10, endTemp = 0.01
         if (activeConfig === undefined || activeClass === undefined) {
             return
         }
@@ -124,7 +127,7 @@ export default function SeatingConfigEditor() {
         }
         if (activeClass.studentIds.length > numberOfAvailableDesks) {
             toast.open(
-                toast.toastWarning("Warning","Not enough desks.")
+                toast.toastWarning("Warning", "Not enough desks.")
             )
             return
         }
@@ -220,9 +223,9 @@ export default function SeatingConfigEditor() {
         let bestAssignment = new Map(studentToDesk);
         let bestScore = currentScore;
 
-        for (let iter = 0; iter < iterations; iter++) {
+        for (let iter = 0; iter < shufflePreferences.iterations; iter++) {
             // Exponential cooling schedule
-            const t = startTemp * Math.pow(endTemp / startTemp, iter / iterations);
+            const t = shufflePreferences.explorationStrengthStart * Math.pow(shufflePreferences.explorationStrengthEnd / shufflePreferences.explorationStrengthStart, iter / shufflePreferences.iterations);
 
             // Two kinds of moves:
             //  - "swap": two students trade desks
@@ -295,12 +298,12 @@ export default function SeatingConfigEditor() {
                 } else {
                     grid[rowIndex][colIndex].studentId = null
                 }
-                
+
 
             }
         }
-        
-        dispatch({ type: 'UPDATE_SEATING_CONFIG_GRID', payload: { configId: activeConfig.id, newGrid: grid } });
+
+        dispatch({ type: 'UPDATE_SEATING_CONFIG', payload: { configId: activeConfig.id, newConfig: { ...activeConfig, grid: grid } } });
     }
 
     function scoreAssignment(
@@ -311,74 +314,80 @@ export default function SeatingConfigEditor() {
         let score = 0;
 
         // 1. Desk-tag preference
-        for (const [studentId, deskId] of studentToDesk.entries()) {
-            const prefSet = deskPrefSets.get(deskId);
-            if (prefSet && prefSet.has(studentId)) score += PREFERENCE_WEIGHT;
-        }
-
-        // 2. Keep-together groups
-        for (const group of keepTogetherGroups) {
-            if (group.studentIds.length < 2) {
-                continue
-            }
-            if (group.useAnd) {
-                let areAllTogether = true;
-                let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
-                for (let i = 0; i < group.studentIds.length; i++) {
-                    for (let j = i + 1; j < group.studentIds.length; j++) {
-                        const deskA = studentToDesk.get(group.studentIds[i]);
-                        const deskB = studentToDesk.get(group.studentIds[j]);
-
-                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB) == false) {
-                            areAllTogether = false
-                        }
-                    }
-                }
-                if (areAllTogether) {
-                    score += TOGETHER_WEIGHT * pairCount;
-                }
-            } else {
-                for (let i = 0; i < group.studentIds.length; i++) {
-                    for (let j = i + 1; j < group.studentIds.length; j++) {
-                        const deskA = studentToDesk.get(group.studentIds[i]);
-                        const deskB = studentToDesk.get(group.studentIds[j]);
-
-                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
-                            score += TOGETHER_WEIGHT;
-                        }
-                    }
-                }
+        if (!shufflePreferences.ignoreDeskTags) {
+            for (const [studentId, deskId] of studentToDesk.entries()) {
+                const prefSet = deskPrefSets.get(deskId);
+                if (prefSet && prefSet.has(studentId)) score += PREFERENCE_WEIGHT;
             }
         }
 
-        // 3. Keep-apart groups
-        for (const group of keepApartGroups) {
-            if (group.studentIds.length < 2) {
-                continue
-            }
-            if (group.useAnd) {
-                let areAllSeparate = true
-                let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
-                for (let i = 0; i < group.studentIds.length; i++) {
-                    for (let j = i + 1; j < group.studentIds.length; j++) {
-                        const deskA = studentToDesk.get(group.studentIds[i]);
-                        const deskB = studentToDesk.get(group.studentIds[j]);
-                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
-                            areAllSeparate = false
-                            
+        if (!shufflePreferences.ignoreKeepTogetherGroups) {
+            // 2. Keep-together groups
+            for (const group of keepTogetherGroups) {
+                if (group.studentIds.length < 2) {
+                    continue
+                }
+                if (group.useAnd) {
+                    let areAllTogether = true;
+                    let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const deskA = studentToDesk.get(group.studentIds[i]);
+                            const deskB = studentToDesk.get(group.studentIds[j]);
+
+                            if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB) == false) {
+                                areAllTogether = false
+                            }
+                        }
+                    }
+                    if (areAllTogether) {
+                        score += TOGETHER_WEIGHT * pairCount;
+                    }
+                } else {
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const deskA = studentToDesk.get(group.studentIds[i]);
+                            const deskB = studentToDesk.get(group.studentIds[j]);
+
+                            if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                                score += TOGETHER_WEIGHT;
+                            }
                         }
                     }
                 }
-                if (areAllSeparate == false) {
-                    score -= APART_PENALTY * pairCount;
+            }
+        }
+
+        if (!shufflePreferences.ignoreKeepApartGroups) {
+            // 3. Keep-apart groups
+            for (const group of keepApartGroups) {
+                if (group.studentIds.length < 2) {
+                    continue
                 }
-            } else {
-                for (let i = 0; i < group.studentIds.length; i++) {
-                    for (let j = i + 1; j < group.studentIds.length; j++) {
-                        const deskA = studentToDesk.get(group.studentIds[i]);
-                        const deskB = studentToDesk.get(group.studentIds[j]);
-                        if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
-                            score -= APART_PENALTY;
+                if (group.useAnd) {
+                    let areAllSeparate = true
+                    let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const deskA = studentToDesk.get(group.studentIds[i]);
+                            const deskB = studentToDesk.get(group.studentIds[j]);
+                            if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                                areAllSeparate = false
+
+                            }
+                        }
+                    }
+                    if (areAllSeparate == false) {
+                        score -= APART_PENALTY * pairCount;
+                    }
+                } else {
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const deskA = studentToDesk.get(group.studentIds[i]);
+                            const deskB = studentToDesk.get(group.studentIds[j]);
+                            if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                                score -= APART_PENALTY;
+                            }
                         }
                     }
                 }
@@ -399,6 +408,19 @@ export default function SeatingConfigEditor() {
         var lowerLeftCell: FloorCell | null = givenCell.column > 0 && givenCell.row < rows - 1 ? floorCells[givenCell.row + 1][givenCell.column - 1] : null
         var lowerRightCell: FloorCell | null = givenCell.column < cols - 1 && givenCell.row < rows - 1 ? floorCells[givenCell.row + 1][givenCell.column + 1] : null
         return [leftCell, rightCell, upperCell, lowerCell, upperLeftCell, upperRightCell, lowerLeftCell, lowerRightCell]
+    }
+
+    function updateShufflePreferences(updatedPreferences: ShufflePreferences) {
+        dispatch({ type: 'EDIT_SHUFFLE_PREFERENCES', payload: { updatedPreferences: updatedPreferences } });
+
+    }
+
+    function openShufflePreferencesModal() {
+        setIsModalOpen(true);
+    }
+
+    function onCloseShufflePreferencesModal() {
+        setIsModalOpen(false);
     }
 
 
@@ -433,9 +455,52 @@ export default function SeatingConfigEditor() {
                         </div>
                     </DragDropProvider>
                     <div className="config-editor-actions-panel">
+                        <button onClick={openShufflePreferencesModal} className="default-button">Shuffle Preferences</button>
                         <button onClick={onShuffleStudents} className="default-button">Shuffle Students</button>
                         <button onClick={onAddDesk} className="default-button">Add Desk</button>
                     </div>
+                    <Modal open={isModalOpen} onClose={onCloseShufflePreferencesModal}>
+                        <div className="shuffle-preferences-modal">
+                            <div className="flex flex-row justify-center">
+                                <p className="title">Shuffle Preferences</p>
+                            </div>
+                            <div>
+                                <div className="shuffle-preference-row">
+                                    <p>Iterations</p>
+                                    <input type="range" min="100" max="50000" value={shufflePreferences.iterations} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, iterations: parseInt(e.target.value) })} />
+                                    <p>{shufflePreferences.iterations}</p>
+                                </div>
+                                <div className="shuffle-preference-row">
+                                    <p>Initial Exploration</p>
+                                    <input type="range" step={.1} min="8.0" max="12.0" value={shufflePreferences.explorationStrengthStart} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, explorationStrengthStart: parseFloat(e.target.value) })} />
+                                    <p>{shufflePreferences.explorationStrengthStart.toFixed(2)}</p>
+                                </div>
+                                <div className="shuffle-preference-row">
+                                    <p>Final Exploration</p>
+                                    <input type="range" step={.01} min="0.05" max="0.2" value={shufflePreferences.explorationStrengthEnd} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, explorationStrengthEnd: parseFloat(e.target.value) })} />
+                                    <p>{shufflePreferences.explorationStrengthEnd.toFixed(2)}</p>
+                                </div>
+                                <div className="shuffle-preference-row">
+                                    <p>Ignore Keep Apart Groups</p>
+                                    <input type="checkbox" checked={shufflePreferences.ignoreKeepApartGroups} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepApartGroups: e.target.checked })} />
+                                    <p>{shufflePreferences.ignoreKeepApartGroups ? 'Yes' : 'No'}</p>
+                                </div>
+                                <div className="shuffle-preference-row">
+                                    <p>Ignore Keep Together Groups</p>
+                                    <input type="checkbox" checked={shufflePreferences.ignoreKeepTogetherGroups} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepTogetherGroups: e.target.checked })} />
+                                    <p>{shufflePreferences.ignoreKeepTogetherGroups ? 'Yes' : 'No'}</p>
+                                </div>
+                                <div className="shuffle-preference-row">
+                                    <p>Ignore Desk Tags</p>
+                                    <input type="checkbox" checked={shufflePreferences.ignoreDeskTags} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreDeskTags: e.target.checked })} />
+                                    <p>{shufflePreferences.ignoreDeskTags ? 'Yes' : 'No'}</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-row justify-center">
+                                <button onClick={onCloseShufflePreferencesModal} className="default-button">Close</button>
+                            </div>
+                        </div>
+                    </Modal>
                 </div>
                 <DeskEditor></DeskEditor>
             </div>

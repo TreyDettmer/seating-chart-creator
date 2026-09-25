@@ -46,30 +46,9 @@ export default function DraggableStudentComponent(
         return name
     }
 
-
-    const displayedStudentName = () : string => {
-        // let alwaysShowLastInitial = false;
-        // var currentName = student.firstName
-        // var numberOfCharactersToInclude = student.firstName.length
-        // var myFlattenedName = `${student.firstName.toLowerCase()}${student.lastName.toLowerCase()}`
-        // var charactersToAppend = 0;
-        // for (let i = 0; i < students.length; i++) {
-        //     if (students[i].id == student.id) {
-        //         continue
-        //     }
-        //     var flattenedName = `${students[i].firstName.toLowerCase()}${students[i].lastName.toLowerCase()}`
-        //     var j = 0;
-        //     while (j < flattenedName.length && j < myFlattenedName.length && flattenedName[j] == myFlattenedName[j]) {
-        //         if (j > numberOfCharactersToInclude)
-        //         j += 1
-        //     }
-        // }
-        return student.firstName
-    }
-
     return (
         <button onClick={onClick} ref={ref} className={className()}>
-            <p>{displayedStudentName()}</p>
+            <p>{student.firstName}</p>
             <ul className="student-desk-tag-marker-container">
                 {deskTags.map((deskTag) => {
                     return <li 

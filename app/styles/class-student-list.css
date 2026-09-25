@@ -42,3 +42,11 @@
   justify-content: space-around;
   align-items: center;
 }
+
+.new-student-creation-modal {
+  padding: 10px;
+}
+
+.new-student-attribute-row {
+
+}

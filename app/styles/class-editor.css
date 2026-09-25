@@ -11,7 +11,13 @@
     width: 500px;
 }
 
-.tab {
+.class-editor-sidebar-tabs-container,
+.editors-tabs-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.sidebar-tab {
   background: var(--background);
   color: var(--foreground);
   height: 100%;
@@ -22,11 +28,11 @@
   justify-content: space-between;
 }
 
-.tab-current {
+.sidebar-tab-current {
   border-bottom: 2px solid var(--foreground);
   font-weight: bold;
 }
 
-.tab:hover {
+.sidebar-tab:hover {
   background: var(--background2);
 }

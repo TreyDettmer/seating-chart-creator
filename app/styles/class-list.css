@@ -19,3 +19,7 @@
 .class-list-button:hover {
   background: var(--background2);
 }
+
+.class-creation-modal {
+  padding: 10px;
+}

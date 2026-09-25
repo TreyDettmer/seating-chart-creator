@@ -1,4 +1,5 @@
 import "../styles/desk-tags-editor.css";
+import "../styles/modal.css";
 import { useState } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
 import { DeskTag } from "../app-state";
@@ -52,7 +53,6 @@ export default function DeskTagsEditor() {
     function onDeleteDeskTag(tagId: string) {
         var tag = deskTags[tagId]
         if (confirm(`Are you sure you want to delete desk tag '${tag.name}' across all classes?`) == true) {
-
             dispatch({ type: 'DELETE_DESK_TAG', payload: { tagId: tagId } });
         }
     }
@@ -102,7 +102,7 @@ export default function DeskTagsEditor() {
             </ul>
             <button className="default-button" onClick={openDeskTagCreationModal}>Create New Tag</button>
             <Modal open={openTagCreationModal} onClose={onCloseDeskTagCreationModal}>
-                <div className="desk-tag-creation-modal">
+                <div>
                     <div className="flex flex-row justify-center">
                         <p className="title">Desk Tag Creator</p>
                     </div>
