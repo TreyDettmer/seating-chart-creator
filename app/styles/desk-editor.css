@@ -12,3 +12,10 @@
 .desk-editor-tag-select {
   width: 300px;
 }
+
+.desk-editor-allows-students {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+}

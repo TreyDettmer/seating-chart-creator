@@ -7,6 +7,8 @@ import Modal from "./modal";
 import { useToast } from "./toast-context";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import { v4 as uuid } from 'uuid'
+import {FiUserCheck, FiUserX } from 'react-icons/fi'
+import Toggle from "./toggle";
 
 
 
@@ -58,6 +60,7 @@ export default function ClassStudentList() {
                         iepDesc: "",
                         deskTagIds: [],
                         nameAbbr: "",
+                        isPresent: true
                     }
                     importedStudents[student.id] = student
                 }
@@ -109,7 +112,8 @@ export default function ClassStudentList() {
             isEsl: newStudentInfo.isEsl,
             iepDesc: newStudentInfo.iepDesc.trim(),
             deskTagIds: [],
-            nameAbbr: ""
+            nameAbbr: "",
+            isPresent: true
         }
         dispatch({ type: 'ADD_STUDENT', payload: { classId: activeClass.id, student: newStudent } });
         setIsAddStudentModalOpen(false)
@@ -130,6 +134,7 @@ export default function ClassStudentList() {
                 <table className="student-list-table">
                     <thead>
                         <tr>
+                            <th>Is Present</th>
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>Gender</th>
@@ -141,6 +146,12 @@ export default function ClassStudentList() {
                         {students.map(student => {
                             return (
                                 <tr key={student.id}>
+                                    <td>
+                                        <button className={`attendance-toggle-button ${student.isPresent ? 'attendance-toggle-button-on' : 'attendance-toggle-button-off'}`} onClick={() => onStudentUpdated({ ...student, isPresent: !student.isPresent})}>
+                                            {student.isPresent && <FiUserCheck size={25}></FiUserCheck>}
+                                            {!student.isPresent && <FiUserX size={25}></FiUserX>}
+                                        </button>
+                                    </td>
                                     <td>
                                         <input value={student.firstName} onChange={e => onStudentUpdated({ ...student, firstName: e.target.value.trim() })}></input>
                                     </td>
@@ -160,7 +171,7 @@ export default function ClassStudentList() {
                                         }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.Boy }) }} />
                                     </td>
                                     <td>
-                                        <input type="checkbox" checked={student.isEsl} onChange={e => onStudentUpdated({ ...student, isEsl: e.target.checked })} />
+                                        <Toggle isChecked={student.isEsl} onChanged={(newVal : boolean) => onStudentUpdated({ ...student, isEsl: newVal })} ></Toggle>
                                     </td>
                                     <td>
                                         <input value={student.iepDesc} onChange={e => onStudentUpdated({ ...student, iepDesc: e.target.value.trim() })}></input>

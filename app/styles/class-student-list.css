@@ -1,11 +1,14 @@
 @import '../globals.css';
 
 .student-list-table-container {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 80vh;
 }
 
 .student-list-table {
   min-width: 350px;
+  border-collapse: collapse;
 }
 
 .student-list-table th {
@@ -49,4 +52,29 @@
 
 .new-student-attribute-row {
 
+}
+
+.attendance-toggle-button {
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.attendance-toggle-button-on {
+  color: green;
+}
+
+.attendance-toggle-button-on:hover {
+  color: rgb(0, 197, 0);
+}
+
+.attendance-toggle-button-off {
+  color: rgb(216, 0, 0);
+}
+
+.attendance-toggle-button-off:hover {
+  color: rgb(255, 69, 69);
 }

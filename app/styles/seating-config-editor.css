@@ -5,6 +5,7 @@
   flex-direction: column;
   flex-grow: 1;
   border: 1px solid pink;
+  max-height: 100%;
 }
 
 .config-editor-classroom-and-desk-editor-container {
@@ -35,8 +36,8 @@
 .classroom {
   background-color: rgb(92, 128, 134);
   position: relative;
-  width: 800px;
-  height: 800px;
+  width: 700px;
+  height: 700px;
   aspect-ratio: 1 / 1;
   overflow: scroll;
 }

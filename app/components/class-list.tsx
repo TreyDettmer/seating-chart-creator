@@ -60,7 +60,7 @@ export default function ClassListComponent(
     };
 
     return (
-        <div className="flex flex-row">
+        <div className="class-list">
             <ul className="flex flex-row">
                 {Object.values(classes).map(x => {
                     return (

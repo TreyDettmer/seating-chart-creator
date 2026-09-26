@@ -1,14 +1,21 @@
 @import '../globals.css';
 
+
+
+
 .class-editor {
   display: flex;
   flex-direction: row;
-  flex-grow: 1;
+  flex-grow: 2;
   background-color: var(--background);
+  /* max-height: 95vh; */
+  /* overflow-y: scroll; */
+  /* align-items: stretch; */
 }
 
 .class-editor-sidebar {
     width: 500px;
+    height: 100%;
 }
 
 .class-editor-sidebar-tabs-container,
@@ -35,4 +42,11 @@
 
 .sidebar-tab:hover {
   background: var(--background2);
+}
+
+.editors-container {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  max-height: 100%;
 }

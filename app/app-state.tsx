@@ -63,6 +63,10 @@ export type AppAction =
   | { type: 'REMOVE_DESK'; payload: { configId: string; row: number; col: number; } }
   | { type: 'ADD_DESK'; payload: { configId: string; } }
   | { type: 'EDIT_SHUFFLE_PREFERENCES'; payload: { updatedPreferences: ShufflePreferences; } }
+  | { type: 'ADD_GROUPS_CONFIGURATION'; payload: { classId: string, groupsConfiguration: GroupsConfiguration; } }
+  | { type: 'SET_ACTIVE_GROUPS_CONFIGURATION'; payload: { classId: string, groupsId: string | null; } }
+  | { type: 'EDIT_GROUPS_CONFIGURATION'; payload: { updatedGroupsConfiguration: GroupsConfiguration; } }
+  | { type: 'SWAP_STUDENTS_IN_GROUPS'; payload: { groupsId: string; sourceGroupId: string; targetGroupId: string; studentId1: string; studentId2: string | null } }
 
 export const CustomOption = (props: any) => {
   return (
@@ -124,7 +128,7 @@ export interface SelectNumberOption {
   label: string;
 }
 
-export interface DeskTagSelectOption {
+export interface TagSelectOption {
   value: string;
   label: string;
   color: string;
@@ -140,6 +144,7 @@ export interface Student {
   iepDesc: string;
   deskTagIds: string[];
   nameAbbr: string;
+  isPresent: boolean;
 }
 
 export enum Gender {
@@ -172,6 +177,7 @@ export interface SchoolClass {
   studentIds: string[];
   seatingConfigurationIds: string[];
   activeConfigurationId: string | null;
+  activeGroupsConfigurationId: string | null;
   selectedStudentId: string | null;
   keepApartGroupIds: string[];
   keepTogetherGroupIds: string[];
@@ -222,12 +228,15 @@ export interface GroupsConfiguration {
   id: string;
   classId: string;
   name: string;
+  selectedGroupId : string | null;
+  studentGroups: StudentGroup[];
 }
 
 export interface StudentGroup {
   id: string;
   name: string;
   studentIds: string[];
+  deskTagIds: string[];
 }
 
 export interface FloorCell {
@@ -259,6 +268,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             studentIds: [],
             seatingConfigurationIds: [],
             activeConfigurationId: null,
+            activeGroupsConfigurationId: null,
             selectedStudentId: null,
             keepApartGroupIds: [],
             keepTogetherGroupIds: []
@@ -914,6 +924,93 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         shufflePreferences: updatedPreferences
       };
+    }
+
+    case 'ADD_GROUPS_CONFIGURATION': {
+      const { classId, groupsConfiguration } = action.payload;
+      return {
+        ...state,
+        groupsConfigurations: {
+          ...state.groupsConfigurations,
+          [groupsConfiguration.id]: groupsConfiguration,
+        },
+        classes: {
+          ...state.classes,
+          [classId]: {
+            ...state.classes[classId],
+            activeGroupsConfigurationId: groupsConfiguration.id
+          }
+        }
+      }
+    }
+
+    case 'SET_ACTIVE_GROUPS_CONFIGURATION': {
+      const { classId, groupsId } = action.payload;
+      return {
+        ...state,
+        classes: {
+          ...state.classes,
+          [classId]: {
+            ...state.classes[classId],
+            activeGroupsConfigurationId: groupsId
+          }
+        }
+      }
+    }
+
+    case 'SWAP_STUDENTS_IN_GROUPS': {
+      const {groupsId, sourceGroupId, targetGroupId, studentId1, studentId2} = action.payload
+      const groupConfig = state.groupsConfigurations[groupsId];
+      if (groupConfig == undefined) {
+        return state;
+      }
+      var studentGroups = [...groupConfig.studentGroups]
+      studentGroups = studentGroups.map(x => {
+        if (x.id === sourceGroupId) {
+          return {
+            ...x,
+            studentIds: studentId2 != null ? [
+              ...x.studentIds.filter(y => y != studentId1),
+              studentId2
+            ] : [
+              ...x.studentIds.filter(y => y != studentId1)
+            ]
+          }
+        } else if (x.id === targetGroupId) {
+          return {
+            ...x,
+            studentIds: studentId2 != null ? [
+              ...x.studentIds.filter(y => y != studentId2),
+              studentId1
+            ] : [
+              ...x.studentIds,
+              studentId1
+            ]
+          }
+        }
+        return x;
+      })
+      return {
+          ...state,
+          groupsConfigurations: {
+            ...state.groupsConfigurations,
+            [groupsId]: {
+              ...groupConfig,
+              studentGroups: studentGroups
+            }
+          }
+        }
+    }
+
+    case 'EDIT_GROUPS_CONFIGURATION': {
+      const {updatedGroupsConfiguration} = action.payload
+      return {
+        ...state,
+        groupsConfigurations: {
+          ...state.groupsConfigurations,
+          [updatedGroupsConfiguration.id]: updatedGroupsConfiguration
+        }
+      }
     }
 
     default:

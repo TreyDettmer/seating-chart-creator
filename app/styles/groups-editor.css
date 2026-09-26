@@ -1,5 +1,110 @@
 @import '../globals.css';
 
+.groups-editor {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.groups-generation-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.groups-generation-page-header {
+  font-size: large;
+}
+
+.groups-generation-options {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.existing-groups-container {
+
+}
+
+.existing-groups-row {
+  cursor: pointer;
+}
+
 .selectable-option {
-  color: var(--background2);
+  color: var(--background2) !important;
+}
+
+.current-groups-config-header-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.current-groups-config-header {
+  text-align: center;
+  font-size: large;
+}
+
+.current-group-options-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+}
+
+.groups-grid {
+  display: flex;
+  gap: 20px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.student-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--background2);
+  padding: 10px;
+}
+
+.student-group ul {
+  width: 100%;
+}
+
+.student-group-header-container {
+  border-bottom: 1px solid var(--foreground);
+}
+
+.student-group-header {
+  text-align: center;
+}
+
+.student-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 50px;
+  width: 100%;
+  margin: 5px 0px 5px 0px;
+}
+
+.student-group-row-drop-target {
+  background-color: var(--background);
+}
+
+.student-group-row-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 95%;
+  height: 95%;
+  border: 1px solid var(--foreground2);
+  border-radius: 10px;
 }
