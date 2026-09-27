@@ -15,7 +15,7 @@
   box-shadow: 2px 2px 2px rgba(114, 114, 114, 0.507);
 }
 
-.desk-desk-tag-marker-container {
+.desk-tag-marker-container {
   width: 100%;
   height: 100%;
   display: flex;
@@ -23,7 +23,7 @@
   align-items: end;
 }
 
-.desk-desk-tag-marker {
+.desk-tag-marker {
   width: 20%;
   height: 10%;
 }

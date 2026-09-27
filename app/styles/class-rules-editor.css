@@ -54,7 +54,7 @@
   background: var(--background2);
 }
 
-.desk-tag-students-header {
+.tag-students-header {
   width: 500px;
   display: flex;
   flex-direction: row;
@@ -64,7 +64,7 @@
   font-weight: bold;
 }
 
-.desk-tag-students-row {
+.tag-students-row {
   width: 500px;
   display: flex;
   flex-direction: row;

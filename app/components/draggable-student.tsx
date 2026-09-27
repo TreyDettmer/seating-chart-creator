@@ -2,7 +2,7 @@ import "../styles/draggable-student.css";
 import { useDraggable } from "@dnd-kit/react"
 import { MouseEvent } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context"
-import { DeskTag, Student } from "../app-state";
+import { Tag, Student } from "../app-state";
 
 export interface DraggableStudentProps {
     id: string,
@@ -15,7 +15,7 @@ export default function DraggableStudentComponent(
     const { ref, isDragging } = useDraggable({ id: props.id })
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents, deskTags: allDeskTags  } = useAppState();
+    const { students: allStudents, tags: allTags  } = useAppState();
 
     if (activeClass == undefined) {
         return null;
@@ -26,8 +26,8 @@ export default function DraggableStudentComponent(
     });
     const student : Student = allStudents[props.studentId]
     
-    const deskTags : DeskTag[] = student.deskTagIds.map(x => {
-        return allDeskTags[x]
+    const tags : Tag[] = student.tagIds.map(x => {
+        return allTags[x]
     })
 
     function onClick(event : MouseEvent<HTMLButtonElement>) {
@@ -49,13 +49,13 @@ export default function DraggableStudentComponent(
     return (
         <button onClick={onClick} ref={ref} className={className()}>
             <p>{student.firstName}</p>
-            <ul className="student-desk-tag-marker-container">
-                {deskTags.map((deskTag) => {
+            <ul className="student-tag-marker-container">
+                {tags.map((tag) => {
                     return <li 
-                    className="desk-desk-tag-marker"
-                    key={deskTag.id}
+                    className="desk-tag-marker"
+                    key={tag.id}
                     style={{
-                        backgroundColor: `${deskTag.color}`
+                        backgroundColor: `${tag.color}`
                     }}
                     ></li>
                 })}

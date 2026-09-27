@@ -1,7 +1,7 @@
 import "../styles/desk-editor.css";
 import "../styles/modal.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { DeskTag, CustomOption, SelectOption, TagSelectOption, deskTagColorDot } from "../app-state";
+import { Tag, CustomOption, SelectOption, TagSelectOption, tagColorDot } from "../app-state";
 import Select, { ActionMeta, MultiValue, SingleValue, StylesConfig } from 'react-select'
 import Toggle from "./toggle";
 
@@ -10,7 +10,7 @@ export default function DeskEditor() {
     const activeClass = useActiveClass();
     const activeConfig = useActiveSeatingConfig()
     const dispatch = useAppDispatch();
-    const { deskTags: allDeskTags } = useAppState()
+    const { tags: allTags } = useAppState()
 
 
     const tagSelectStyles: StylesConfig<TagSelectOption> = {
@@ -18,14 +18,14 @@ export default function DeskEditor() {
             data.value
             return {
                 ...styles,
-                ...deskTagColorDot(data.color)
+                ...tagColorDot(data.color)
             };
         },
-        input: (styles) => ({ ...styles, ...deskTagColorDot() }),
+        input: (styles) => ({ ...styles, ...tagColorDot() }),
         multiValue: (styles, { data }) => {
             return {
                 ...styles,
-                ...deskTagColorDot(data.color)
+                ...tagColorDot(data.color)
             };
         },
     }
@@ -42,8 +42,8 @@ export default function DeskEditor() {
 
 
 
-    const deskTagSelectOptions: TagSelectOption[] = Object.keys(allDeskTags).map(deskTagId => {
-        return { value: deskTagId, label: allDeskTags[deskTagId].name, color: allDeskTags[deskTagId].color }
+    const tagSelectOptions: TagSelectOption[] = Object.keys(allTags).map(tagId => {
+        return { value: tagId, label: allTags[tagId].name, color: allTags[tagId].color }
     })
 
 
@@ -54,12 +54,12 @@ export default function DeskEditor() {
         dispatch({ type: 'TOGGLE_CELL_ALLOWS_STUDENTS', payload: { configId: activeConfig.id, row: activeConfig.selectedCell.row, col: activeConfig.selectedCell.col, allowsStudents: newValue } });
     }
 
-    function onAssignedDeskTagsChange(newValue: MultiValue<TagSelectOption>, actionMeta: ActionMeta<TagSelectOption>) {
+    function onAssignedTagsChange(newValue: MultiValue<TagSelectOption>, actionMeta: ActionMeta<TagSelectOption>) {
         if (activeConfig === undefined || activeClass === undefined || activeConfig.selectedCell == null) {
             return
         }
-        var newDeskTagIds = newValue.map(x => x.value)
-        dispatch({ type: 'EDIT_CELL_ASSIGNED_DESK_TAGS', payload: { tagIds: newDeskTagIds, configId: activeConfig.id, row: activeConfig.selectedCell.row, col: activeConfig.selectedCell.col } });
+        var newTagIds = newValue.map(x => x.value)
+        dispatch({ type: 'EDIT_CELL_ASSIGNED_TAGS', payload: { tagIds: newTagIds, configId: activeConfig.id, row: activeConfig.selectedCell.row, col: activeConfig.selectedCell.col } });
     }
 
     function onDeleteDesk() {
@@ -80,22 +80,22 @@ export default function DeskEditor() {
             </div>
 
 
-            <p>Assigned Desk Tags</p>
+            <p>Assigned Tags</p>
             <ul>
                 <Select
                     isMulti
-                    options={deskTagSelectOptions}
-                    className="desk-editor-tag-select"
+                    options={tagSelectOptions}
+                    className="tag-select"
                     classNamePrefix="select"
                     components={{ Option: CustomOption }}
                     styles={tagSelectStyles}
                     value={
-                        deskTagSelectOptions.filter((deskTagOption) => {
+                        tagSelectOptions.filter((tagOption) => {
 
-                            return floorCell.deskTagIds.includes(deskTagOption.value)
+                            return floorCell.tagIds.includes(tagOption.value)
                         })
                     }
-                    onChange={(newValue, actionMeta) => { onAssignedDeskTagsChange(newValue, actionMeta) }}
+                    onChange={(newValue, actionMeta) => { onAssignedTagsChange(newValue, actionMeta) }}
                 />
                 
             </ul>

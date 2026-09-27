@@ -1,6 +1,6 @@
 import "../styles/class-rules-editor.css";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
-import { CustomOption, deskTagColorDot, KeepApartGroup, KeepTogetherGroup, SelectOption, Student } from "../app-state";
+import { CustomOption, tagColorDot, KeepApartGroup, KeepTogetherGroup, SelectOption, Student } from "../app-state";
 import Select, { ActionMeta, MultiValue, SingleValue } from 'react-select'
 import { v4 as uuid } from 'uuid'
 
@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid'
 export default function ClassRulesEditor() {
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents, deskTags, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups } = useAppState();
+    const { students: allStudents, tags, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups } = useAppState();
 
 
 
@@ -139,13 +139,13 @@ export default function ClassRulesEditor() {
         dispatch({ type: 'REMOVE_KEEP_TOGETHER_GROUP', payload: { classId: activeClass.id, groupId: groupId } });
     }
 
-    function onStudentAssignDeskTagsChanged(tagId: string, newValue: MultiValue<SelectOption>, actionMeta: ActionMeta<SelectOption>) {
+    function onStudentAssignTagsChanged(tagId: string, newValue: MultiValue<SelectOption>, actionMeta: ActionMeta<SelectOption>) {
         if (activeClass === undefined) {
             return
         }
         var newStudentIds = newValue.map(x => x.value)
 
-        dispatch({ type: 'EDIT_STUDENTS_ASSIGNED_TO_DESK_TAG', payload: { tagId: tagId, studentIds: newStudentIds } });
+        dispatch({ type: 'EDIT_STUDENTS_ASSIGNED_TO_TAG', payload: { tagId: tagId, studentIds: newStudentIds } });
     }
 
 
@@ -232,20 +232,20 @@ export default function ClassRulesEditor() {
                 })}
                 <button className="default-button" onClick={() => onAddKeepTogetherGroup()}>+ Keep Together Rule</button>
             </ul>
-            <p className="class-rules-editor-header">Desk Tag Rules</p>
-            <p className="class-rules-editor-subheader">Restrict students on the seating chart to desks with a certain tag.</p>
+            <p className="class-rules-editor-header">Tag Rules</p>
+            <p className="class-rules-editor-subheader">Restrict students to desks and groups with a certain tag.</p>
             <ul>
-                <div className="desk-tag-students-header">
-                    <p className="flex-1 text-center">Desk Tag</p>
+                <div className="tag-students-header">
+                    <p className="flex-1 text-center">Tag</p>
                     <p className="flex-1 text-center">Students</p>
                 </div>
-                {Object.entries(deskTags).map(([tagId, deskTag]) => {
-                    return <li className="desk-tag-students-row" key={tagId}>
+                {Object.entries(tags).map(([tagId, tag]) => {
+                    return <li className="tag-students-row" key={tagId}>
                         <p className="flex-1" style={{ display: 'flex', alignItems: 'center' }}>
                             <span
                                 aria-hidden="true"
                                 style={{
-                                    backgroundColor: deskTag.color,
+                                    backgroundColor: tag.color,
                                     borderRadius: 10,
                                     display: 'block',
                                     width: 10,
@@ -254,7 +254,7 @@ export default function ClassRulesEditor() {
                                     marginLeft: 2,
                                 }}
                             />
-                            {deskTag.name}
+                            {tag.name}
                         </p>
                         <Select
                             isMulti
@@ -264,10 +264,10 @@ export default function ClassRulesEditor() {
                             components={{ Option: CustomOption }}
                             value={
                                 studentSelectOptions.filter((studentOption) => {
-                                    return allStudents[studentOption.value].deskTagIds.includes(tagId)
+                                    return allStudents[studentOption.value].tagIds.includes(tagId)
                                 })
                             }
-                            onChange={(newValue, actionMeta) => { onStudentAssignDeskTagsChanged(tagId, newValue, actionMeta) }}
+                            onChange={(newValue, actionMeta) => { onStudentAssignTagsChanged(tagId, newValue, actionMeta) }}
                         />
                     </li>
                 })}

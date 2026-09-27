@@ -2,7 +2,7 @@ import "../styles/draggable-desk.css";
 import { useDraggable } from "@dnd-kit/react"
 import { MouseEvent } from "react";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { DeskTag } from "../app-state";
+import { Tag } from "../app-state";
 
 export interface DraggableDeskProps {
     id : string,
@@ -16,15 +16,15 @@ export default function DraggableDeskComponent(
     props : DraggableDeskProps
 ) {
     const dispatch = useAppDispatch();
-    const { deskTags: allDeskTags } = useAppState()
+    const { tags: allTags } = useAppState()
     const activeConfig = useActiveSeatingConfig();
     if (activeConfig === undefined) {
         return null;
     }
     const { ref, isDragging } = useDraggable({ id: props.id })
-    const deskTagIds = activeConfig.grid[props.cellRow][props.cellCol].deskTagIds;
-    const deskTags : DeskTag[] = deskTagIds.map(x => {
-        return allDeskTags[x]
+    const tagIds = activeConfig.grid[props.cellRow][props.cellCol].tagIds;
+    const tags : Tag[] = tagIds.map(x => {
+        return allTags[x]
     })
 
     function onClick(event : MouseEvent<HTMLButtonElement>) {
@@ -57,18 +57,17 @@ export default function DraggableDeskComponent(
 
     return (
         <button onClick={onClick} ref={ref} className={className()}>
-            <ul className="desk-desk-tag-marker-container">
-                {deskTags.map((deskTag) => {
+            <ul className="desk-tag-marker-container">
+                {tags.map((tag) => {
                     return <li 
-                    className="desk-desk-tag-marker"
-                    key={deskTag.id}
+                    className="desk-tag-marker"
+                    key={tag.id}
                     style={{
-                        backgroundColor: `${deskTag.color}`
+                        backgroundColor: `${tag.color}`
                     }}
                     ></li>
                 })}
-            </ul>
-                
+            </ul>    
         </button>
     )
 }

@@ -3,8 +3,9 @@
 .groups-editor {
   flex-grow: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   max-height: 100%;
+  justify-content: space-between;
 }
 
 .groups-generation-page {
@@ -70,6 +71,8 @@
   align-items: center;
   background-color: var(--background2);
   padding: 10px;
+  min-width: 200px;
+  position: relative;
 }
 
 .student-group ul {
@@ -78,10 +81,19 @@
 
 .student-group-header-container {
   border-bottom: 1px solid var(--foreground);
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }
 
 .student-group-header {
   text-align: center;
+}
+
+.student-group-select-button {
+  margin-left: auto;
+  cursor: pointer;
 }
 
 .student-group-row {
@@ -107,4 +119,20 @@
   height: 95%;
   border: 1px solid var(--foreground2);
   border-radius: 10px;
+}
+
+
+
+.group-tag-marker-container {
+  width: 100%;
+  bottom: 0;
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+}
+
+.group-tag-marker {
+  width: 25px;
+  height: 25px;
 }

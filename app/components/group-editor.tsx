@@ -1,7 +1,7 @@
 import "../styles/group-editor.css";
 
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { DeskTag, CustomOption, SelectOption, TagSelectOption, deskTagColorDot } from "../app-state";
+import { Tag, CustomOption, SelectOption, TagSelectOption, tagColorDot, GroupsConfiguration, StudentGroup } from "../app-state";
 import Modal from "./modal";
 import { v4 as uuid } from 'uuid'
 import Select, { ActionMeta, MultiValue, SingleValue, StylesConfig } from 'react-select'
@@ -12,7 +12,20 @@ export default function GroupEditor() {
     const activeClass = useActiveClass();
     const activeConfig = useActiveSeatingConfig()
     const dispatch = useAppDispatch();
-    const { deskTags: allDeskTags, groupsConfigurations: allGroupsConfigurations } = useAppState()
+    const { tags: allTags, groupsConfigurations: allGroupsConfigurations } = useAppState()
+
+    if (activeClass === undefined) {
+        return null;
+    }
+
+    if (activeClass.activeGroupsConfigurationId == null) {
+        return null;
+    }
+    const groupsConfiguration: GroupsConfiguration = allGroupsConfigurations[activeClass.activeGroupsConfigurationId];
+    if (groupsConfiguration.selectedGroupId == null) {
+        return null;
+    }
+    const selectedGroup : StudentGroup = groupsConfiguration.studentGroups.find(x => x.id == groupsConfiguration.selectedGroupId)! 
 
 
     const tagSelectStyles: StylesConfig<TagSelectOption> = {
@@ -20,68 +33,59 @@ export default function GroupEditor() {
             data.value
             return {
                 ...styles,
-                ...deskTagColorDot(data.color)
+                ...tagColorDot(data.color)
             };
         },
-        input: (styles) => ({ ...styles, ...deskTagColorDot() }),
+        input: (styles) => ({ ...styles, ...tagColorDot() }),
         multiValue: (styles, { data }) => {
             return {
                 ...styles,
-                ...deskTagColorDot(data.color)
+                ...tagColorDot(data.color)
             };
         },
     }
 
-    if (activeClass === undefined) {
-        return null;
-    }
 
-    if (activeConfig === undefined || activeConfig.selectedCell == null) {
-        return (<div className="group-editor"></div>)
-    }
-
-    const floorCell = activeConfig.grid[activeConfig.selectedCell.row][activeConfig.selectedCell.col]
-
-
-
-    const tagSelectOptions: TagSelectOption[] = Object.keys(allDeskTags).map(deskTagId => {
-        return { value: deskTagId, label: allDeskTags[deskTagId].name, color: allDeskTags[deskTagId].color }
+    const tagSelectOptions: TagSelectOption[] = Object.keys(allTags).map(tagId => {
+        return { value: tagId, label: allTags[tagId].name, color: allTags[tagId].color }
     })
 
 
-    function onAllowsStudentsChanged(newValue: boolean) {
-        if (activeConfig === undefined || activeClass === undefined || activeConfig.selectedCell == null) {
-            return
+    function onAssignedTagsChange(newValue: MultiValue<TagSelectOption>, actionMeta: ActionMeta<TagSelectOption>) {
+        var newTagIds = newValue.map(x => x.value)
+        const updatedGroup : StudentGroup = {
+            ...selectedGroup,
+            tagIds: newTagIds
         }
-        dispatch({ type: 'TOGGLE_CELL_ALLOWS_STUDENTS', payload: { configId: activeConfig.id, row: activeConfig.selectedCell.row, col: activeConfig.selectedCell.col, allowsStudents: newValue } });
+        dispatch({ type: 'EDIT_GROUP', payload: { groupsConfigId: groupsConfiguration.id, updatedGroup: updatedGroup } });
     }
 
-    function onAssignedTagsChange(newValue: MultiValue<TagSelectOption>, actionMeta: ActionMeta<TagSelectOption>) {
-        if (activeConfig === undefined || activeClass === undefined || activeConfig.selectedCell == null) {
-            return
+    function updateGroupName(newName: string) {
+        const updatedGroup : StudentGroup = {
+            ...selectedGroup,
+            name: newName
         }
-        var newDeskTagIds = newValue.map(x => x.value)
-        dispatch({ type: 'EDIT_CELL_ASSIGNED_DESK_TAGS', payload: { tagIds: newDeskTagIds, configId: activeConfig.id, row: activeConfig.selectedCell.row, col: activeConfig.selectedCell.col } });
+        dispatch({ type: 'EDIT_GROUP', payload: { groupsConfigId: groupsConfiguration.id, updatedGroup: updatedGroup } });
     }
 
 
     return (
         <div className="group-editor">
             <p>Selected Group Options</p>
-
+            <input value={selectedGroup.name} onChange={(e) => updateGroupName(e.target.value)} />
             <p>Assigned Tags</p>
             <ul>
                 <Select
                     isMulti
                     options={tagSelectOptions}
-                    className="desk-editor-tag-select"
+                    className="tag-select"
                     classNamePrefix="select"
                     components={{ Option: CustomOption }}
                     styles={tagSelectStyles}
                     value={
                         tagSelectOptions.filter((tagOption) => {
 
-                            return floorCell.deskTagIds.includes(tagOption.value)
+                            return selectedGroup.tagIds.includes(tagOption.value)
                         })
                     }
                     onChange={(newValue, actionMeta) => { onAssignedTagsChange(newValue, actionMeta) }}

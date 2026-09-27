@@ -10,17 +10,20 @@ import DeskEditor from "./desk-editor";
 import { useToast } from "./toast-context";
 import Modal from "./modal";
 import { useState } from "react";
+import ShufflePreferencesModal from "./shuffle-preferences-modal";
 
 export default function SeatingConfigEditor() {
     const activeClass = useActiveClass();
     const toast = useToast()
-    const { students: allStudents, seatingConfigurations: allSeatingConfigs, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups, deskTags: allDeskTags, shufflePreferences } = useAppState();
+    const { students: allStudents, 
+        seatingConfigurations: allSeatingConfigs, 
+        keepApartGroups: allKeepApartGroups, 
+        keepTogetherGroups: allKeepTogetherGroups, 
+        tags: allTags, shufflePreferences } = useAppState();
     const [isModalOpen, setIsModalOpen] = useState(false)
     const dispatch = useAppDispatch();
     const activeConfig = useActiveSeatingConfig()
-    const PREFERENCE_WEIGHT = 10; // reward: student seated at a desk that tags them
-    const TOGETHER_WEIGHT = 8;    // reward: keepTogether pair seated adjacently
-    const APART_PENALTY = 12;     // penalty: keepApart pair seated adjacently
+
 
     if (activeClass === undefined) {
         return null;
@@ -190,8 +193,8 @@ export default function SeatingConfigEditor() {
         var deskSetPreferenceMap: Map<string, Set<string>> = new Map();
         for (const cell of desks) {
             const set: Set<string> = new Set();
-            for (const deskTagId of cell.deskTagIds) {
-                students.filter(x => x.deskTagIds.includes(deskTagId)).map(x =>
+            for (const tagId of cell.tagIds) {
+                students.filter(x => x.tagIds.includes(tagId)).map(x =>
                     set.add(x.id)
                 )
             }
@@ -314,10 +317,10 @@ export default function SeatingConfigEditor() {
         let score = 0;
 
         // 1. Desk-tag preference
-        if (!shufflePreferences.ignoreDeskTags) {
+        if (!shufflePreferences.ignoreTags) {
             for (const [studentId, deskId] of studentToDesk.entries()) {
                 const prefSet = deskPrefSets.get(deskId);
-                if (prefSet && prefSet.has(studentId)) score += PREFERENCE_WEIGHT;
+                if (prefSet && prefSet.has(studentId)) score += shufflePreferences.tagsInfluence;
             }
         }
 
@@ -341,7 +344,7 @@ export default function SeatingConfigEditor() {
                         }
                     }
                     if (areAllTogether) {
-                        score += TOGETHER_WEIGHT * pairCount;
+                        score += shufflePreferences.keepTogetherInfluence * pairCount;
                     }
                 } else {
                     for (let i = 0; i < group.studentIds.length; i++) {
@@ -350,7 +353,7 @@ export default function SeatingConfigEditor() {
                             const deskB = studentToDesk.get(group.studentIds[j]);
 
                             if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
-                                score += TOGETHER_WEIGHT;
+                                score += shufflePreferences.keepTogetherInfluence;
                             }
                         }
                     }
@@ -378,7 +381,7 @@ export default function SeatingConfigEditor() {
                         }
                     }
                     if (areAllSeparate == false) {
-                        score -= APART_PENALTY * pairCount;
+                        score -= shufflePreferences.keepApartInfluence * pairCount;
                     }
                 } else {
                     for (let i = 0; i < group.studentIds.length; i++) {
@@ -386,14 +389,13 @@ export default function SeatingConfigEditor() {
                             const deskA = studentToDesk.get(group.studentIds[i]);
                             const deskB = studentToDesk.get(group.studentIds[j]);
                             if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
-                                score -= APART_PENALTY;
+                                score -= shufflePreferences.keepApartInfluence;
                             }
                         }
                     }
                 }
             }
         }
-
         return score;
     }
 
@@ -410,11 +412,6 @@ export default function SeatingConfigEditor() {
         return [leftCell, rightCell, upperCell, lowerCell, upperLeftCell, upperRightCell, lowerLeftCell, lowerRightCell]
     }
 
-    function updateShufflePreferences(updatedPreferences: ShufflePreferences) {
-        dispatch({ type: 'EDIT_SHUFFLE_PREFERENCES', payload: { updatedPreferences: updatedPreferences } });
-
-    }
-
     function openShufflePreferencesModal() {
         setIsModalOpen(true);
     }
@@ -422,7 +419,6 @@ export default function SeatingConfigEditor() {
     function onCloseShufflePreferencesModal() {
         setIsModalOpen(false);
     }
-
 
     return (
         <div className="config-editor">
@@ -459,48 +455,7 @@ export default function SeatingConfigEditor() {
                         <button onClick={onShuffleStudents} className="default-button">Shuffle Students</button>
                         <button onClick={onAddDesk} className="default-button">Add Desk</button>
                     </div>
-                    <Modal open={isModalOpen} onClose={onCloseShufflePreferencesModal}>
-                        <div className="shuffle-preferences-modal">
-                            <div className="flex flex-row justify-center">
-                                <p className="title">Shuffle Preferences</p>
-                            </div>
-                            <div>
-                                <div className="shuffle-preference-row">
-                                    <p>Iterations</p>
-                                    <input type="range" min="100" max="50000" value={shufflePreferences.iterations} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, iterations: parseInt(e.target.value) })} />
-                                    <p>{shufflePreferences.iterations}</p>
-                                </div>
-                                <div className="shuffle-preference-row">
-                                    <p>Initial Exploration</p>
-                                    <input type="range" step={.1} min="8.0" max="12.0" value={shufflePreferences.explorationStrengthStart} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, explorationStrengthStart: parseFloat(e.target.value) })} />
-                                    <p>{shufflePreferences.explorationStrengthStart.toFixed(2)}</p>
-                                </div>
-                                <div className="shuffle-preference-row">
-                                    <p>Final Exploration</p>
-                                    <input type="range" step={.01} min="0.05" max="0.2" value={shufflePreferences.explorationStrengthEnd} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, explorationStrengthEnd: parseFloat(e.target.value) })} />
-                                    <p>{shufflePreferences.explorationStrengthEnd.toFixed(2)}</p>
-                                </div>
-                                <div className="shuffle-preference-row">
-                                    <p>Ignore Keep Apart Groups</p>
-                                    <input type="checkbox" checked={shufflePreferences.ignoreKeepApartGroups} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepApartGroups: e.target.checked })} />
-                                    <p>{shufflePreferences.ignoreKeepApartGroups ? 'Yes' : 'No'}</p>
-                                </div>
-                                <div className="shuffle-preference-row">
-                                    <p>Ignore Keep Together Groups</p>
-                                    <input type="checkbox" checked={shufflePreferences.ignoreKeepTogetherGroups} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepTogetherGroups: e.target.checked })} />
-                                    <p>{shufflePreferences.ignoreKeepTogetherGroups ? 'Yes' : 'No'}</p>
-                                </div>
-                                <div className="shuffle-preference-row">
-                                    <p>Ignore Desk Tags</p>
-                                    <input type="checkbox" checked={shufflePreferences.ignoreDeskTags} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreDeskTags: e.target.checked })} />
-                                    <p>{shufflePreferences.ignoreDeskTags ? 'Yes' : 'No'}</p>
-                                </div>
-                            </div>
-                            <div className="flex flex-row justify-center">
-                                <button onClick={onCloseShufflePreferencesModal} className="default-button">Close</button>
-                            </div>
-                        </div>
-                    </Modal>
+                    <ShufflePreferencesModal open={isModalOpen} onClose={onCloseShufflePreferencesModal}></ShufflePreferencesModal>
                 </div>
                 <DeskEditor></DeskEditor>
             </div>

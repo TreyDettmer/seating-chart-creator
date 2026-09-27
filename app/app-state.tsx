@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { act, ReactNode } from "react";
 import { components } from 'react-select';
 
 
@@ -50,21 +50,19 @@ export type AppAction =
       cellB: { row: number; col: number };
     };
   }
-  | { type: 'CREATE_DESK_TAG'; payload: { deskTag: DeskTag; configId: string | undefined; row: number | undefined; col: number | undefined; } }
-  | { type: 'EDIT_DESK_TAG'; payload: { tagId: string; deskTag: DeskTag } }
-  | { type: 'DELETE_DESK_TAG'; payload: { tagId: string } }
+  | { type: 'CREATE_TAG'; payload: { tag: Tag; } }
+  | { type: 'EDIT_TAG'; payload: { tagId: string; tag: Tag } }
+  | { type: 'DELETE_TAG'; payload: { tagId: string } }
   | { type: 'TOGGLE_CELL_ALLOWS_STUDENTS'; payload: { configId: string; row: number; col: number; allowsStudents: boolean } }
-  | { type: 'ADD_DESK_TAG_TO_CELL'; payload: { tagId: string; configId: string; row: number; col: number; } }
-  | { type: 'EDIT_CELL_ASSIGNED_DESK_TAGS'; payload: { tagIds: string[]; configId: string; row: number; col: number; } }
-  | { type: 'EDIT_STUDENTS_ASSIGNED_TO_DESK_TAG'; payload: { tagId: string; studentIds: string[] } }
-  | { type: 'REMOVE_DESK_TAG_FROM_CELL'; payload: { tagId: string; configId: string; row: number; col: number; } }
-  | { type: 'ADD_DESK_TAG_TO_STUDENT'; payload: { tagId: string; classId: string; student: Student } }
-  | { type: 'REMOVE_DESK_TAG_FROM_STUDENT'; payload: { tagId: string; classId: string; student: Student } }
+  | { type: 'EDIT_CELL_ASSIGNED_TAGS'; payload: { tagIds: string[]; configId: string; row: number; col: number; } }
+  | { type: 'EDIT_GROUP'; payload: { groupsConfigId: string; updatedGroup: StudentGroup; } }
+  | { type: 'EDIT_STUDENTS_ASSIGNED_TO_TAG'; payload: { tagId: string; studentIds: string[] } }
   | { type: 'REMOVE_DESK'; payload: { configId: string; row: number; col: number; } }
   | { type: 'ADD_DESK'; payload: { configId: string; } }
   | { type: 'EDIT_SHUFFLE_PREFERENCES'; payload: { updatedPreferences: ShufflePreferences; } }
   | { type: 'ADD_GROUPS_CONFIGURATION'; payload: { classId: string, groupsConfiguration: GroupsConfiguration; } }
   | { type: 'SET_ACTIVE_GROUPS_CONFIGURATION'; payload: { classId: string, groupsId: string | null; } }
+  | { type: 'SET_ACTIVE_GROUP'; payload: { groupsConfigId: string; selectedGroupId: string | null } }
   | { type: 'EDIT_GROUPS_CONFIGURATION'; payload: { updatedGroupsConfiguration: GroupsConfiguration; } }
   | { type: 'SWAP_STUDENTS_IN_GROUPS'; payload: { groupsId: string; sourceGroupId: string; targetGroupId: string; studentId1: string; studentId2: string | null } }
 
@@ -79,7 +77,9 @@ export const CustomOption = (props: any) => {
   );
 };
 
-export const deskTagColorDot = (color = 'transparent') => ({
+
+
+export const tagColorDot = (color = 'transparent') => ({
   alignItems: 'center',
   display: 'flex',
 
@@ -106,7 +106,10 @@ export interface ShufflePreferences {
   explorationStrengthEnd : number;
   ignoreKeepApartGroups : boolean;
   ignoreKeepTogetherGroups : boolean;
-  ignoreDeskTags : boolean;
+  ignoreTags : boolean;
+  keepTogetherInfluence : number;
+  keepApartInfluence : number;
+  tagsInfluence : number;
 }
 
 export const initialShufflePreferences: ShufflePreferences = {
@@ -115,7 +118,10 @@ export const initialShufflePreferences: ShufflePreferences = {
   explorationStrengthEnd: 0.01,
   ignoreKeepApartGroups: false,
   ignoreKeepTogetherGroups: false,
-  ignoreDeskTags: false,
+  ignoreTags: false,
+  keepTogetherInfluence: 8,
+  keepApartInfluence: 12,
+  tagsInfluence: 10,
 };
 
 export interface SelectOption {
@@ -142,7 +148,7 @@ export interface Student {
   gender: Gender;
   isEsl: boolean;
   iepDesc: string;
-  deskTagIds: string[];
+  tagIds: string[];
   nameAbbr: string;
   isPresent: boolean;
 }
@@ -183,10 +189,11 @@ export interface SchoolClass {
   keepTogetherGroupIds: string[];
 }
 
-export interface DeskTag {
+export interface Tag {
   id: string;
   name: string;
   color: string;
+  priority: number;
 }
 
 export interface AppState {
@@ -196,7 +203,7 @@ export interface AppState {
   groupsConfigurations: Record<string, GroupsConfiguration>;
   keepApartGroups: Record<string, KeepApartGroup>;
   keepTogetherGroups: Record<string, KeepTogetherGroup>;
-  deskTags: Record<string, DeskTag>;
+  tags: Record<string, Tag>;
   activeClassId: string | null;
   shufflePreferences : ShufflePreferences;
 }
@@ -207,7 +214,7 @@ export const initialAppState: AppState = {
   groupsConfigurations: {},
   keepApartGroups: {},
   keepTogetherGroups: {},
-  deskTags: {},
+  tags: {},
   activeClassId: null,
   shufflePreferences: initialShufflePreferences
 };
@@ -236,7 +243,7 @@ export interface StudentGroup {
   id: string;
   name: string;
   studentIds: string[];
-  deskTagIds: string[];
+  tagIds: string[];
 }
 
 export interface FloorCell {
@@ -247,7 +254,7 @@ export interface FloorCell {
   hasDesk: boolean,
   allowsStudents: boolean,
   studentId: string | null
-  deskTagIds: string[]
+  tagIds: string[]
 }
 
 
@@ -604,11 +611,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const a = newGrid[cellA.row][cellA.col];
       const b = newGrid[cellB.row][cellB.col];
 
-      newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents, deskTagIds: b.deskTagIds };
-      newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents, deskTagIds: a.deskTagIds };
+      newGrid[cellA.row][cellA.col] = { ...a, studentId: b.studentId, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents, tagIds: b.tagIds };
+      newGrid[cellB.row][cellB.col] = { ...b, studentId: a.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents, tagIds: a.tagIds };
       if (a.hasDesk && a.studentId == null && b.hasDesk == false && b.studentId != null && a.allowsStudents) {
-        newGrid[cellA.row][cellA.col] = { ...a, studentId: null, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents, deskTagIds: b.deskTagIds };
-        newGrid[cellB.row][cellB.col] = { ...b, studentId: b.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents, deskTagIds: a.deskTagIds };
+        newGrid[cellA.row][cellA.col] = { ...a, studentId: null, hasDesk: b.hasDesk, allowsStudents: b.allowsStudents, tagIds: b.tagIds };
+        newGrid[cellB.row][cellB.col] = { ...b, studentId: b.studentId, hasDesk: a.hasDesk, allowsStudents: a.allowsStudents, tagIds: a.tagIds };
       }
 
       return {
@@ -624,68 +631,42 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case 'CREATE_DESK_TAG': {
-      const { deskTag, configId, row, col } = action.payload;
-      if (configId === undefined || row === undefined || col === undefined) {
-        return {
-        ...state,
-        deskTags: {
-          ...state.deskTags,
-          [deskTag.id]: deskTag
-        },
-      };
-      }
-      const config = state.seatingConfigurations[configId];
-      if (!config) return state;
-
-      const newGrid = config.grid.slice();
-      const newRow = newGrid[row].slice();
-      newRow[col] = {
-        ...newRow[col],
-        deskTagIds: [
-          ...newRow[col].deskTagIds,
-          deskTag.id
-        ]
-      };
-      newGrid[row] = newRow;
+    case 'CREATE_TAG': {
+      const { tag } = action.payload;
       return {
         ...state,
-        deskTags: {
-          ...state.deskTags,
-          [deskTag.id]: deskTag
-        },
-        seatingConfigurations: {
-          ...state.seatingConfigurations,
-          [configId]: { ...config, grid: newGrid },
-        },
+        tags: {
+          ...state.tags,
+          [tag.id]: tag
+        }
       };
     }
 
-    case 'EDIT_DESK_TAG': {
-      const { tagId, deskTag} = action.payload;
+    case 'EDIT_TAG': {
+      const { tagId, tag} = action.payload;
       return {
         ...state,
-        deskTags: {
-          ...state.deskTags,
+        tags: {
+          ...state.tags,
           [tagId]: {
-            ...state.deskTags[tagId],
-            color: deskTag.color,
-            name: deskTag.name
+            ...state.tags[tagId],
+            color: tag.color,
+            name: tag.name
           }
         }
       };
     }
 
-    case 'DELETE_DESK_TAG': {
+    case 'DELETE_TAG': {
       const { tagId } = action.payload;
-      const { [tagId]: _removedTag, ...remainingDeskTags } = state.deskTags;
+      const { [tagId]: _removedTag, ...remainingTags } = state.tags;
 
       const updatedStudents = Object.fromEntries(
         Object.entries(state.students).map(([studentId, student]) => [
           studentId,
           {
             ...student,
-            deskTagIds: student.deskTagIds.filter((id) => id !== tagId),
+            tagIds: student.tagIds.filter((id) => id !== tagId),
           },
         ])
       );
@@ -698,7 +679,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             grid: config.grid.map((row) =>
               row.map((cell) => ({
                 ...cell,
-                deskTagIds: cell.deskTagIds.filter((id) => id !== tagId),
+                tagIds: cell.tagIds.filter((id) => id !== tagId),
               }))
             ),
           },
@@ -708,7 +689,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         students: updatedStudents,
-        deskTags: remainingDeskTags,
+        tags: remainingTags,
         seatingConfigurations: updatedSeatingConfigs,
       };
     }
@@ -733,31 +714,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case 'ADD_DESK_TAG_TO_CELL': {
-      const { tagId, configId, row, col } = action.payload;
-      const config = state.seatingConfigurations[configId];
-      if (!config) return state;
-      const newGrid = config.grid.slice();
-      const newRow = newGrid[row].slice();
-      newRow[col] = {
-        ...newRow[col],
-        deskTagIds: [
-          ...newRow[col].deskTagIds,
-          tagId
-        ]
-      };
-      newGrid[row] = newRow;
-      return {
-        ...state,
-        seatingConfigurations: {
-          ...state.seatingConfigurations,
-          [configId]: { ...config, grid: newGrid },
-        },
-      };
-    }
 
-
-    case 'EDIT_CELL_ASSIGNED_DESK_TAGS': {
+    case 'EDIT_CELL_ASSIGNED_TAGS': {
       const { tagIds, configId, row, col } = action.payload;
       const config = state.seatingConfigurations[configId];
       if (!config) return state;
@@ -765,7 +723,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const newRow = newGrid[row].slice();
       newRow[col] = {
         ...newRow[col],
-        deskTagIds: tagIds
+        tagIds: tagIds
       };
       newGrid[row] = newRow;
       return {
@@ -777,74 +735,48 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case 'REMOVE_DESK_TAG_FROM_CELL': {
-      const { tagId, configId, row, col } = action.payload;
-      const config = state.seatingConfigurations[configId];
-      if (!config) return state;
-      const newGrid = config.grid.slice();
-      const newRow = newGrid[row].slice();
-      newRow[col] = {
-        ...newRow[col],
-        deskTagIds: newRow[col].deskTagIds.filter(x => x != tagId)
-      };
-      newGrid[row] = newRow;
-      return {
-        ...state,
-        seatingConfigurations: {
-          ...state.seatingConfigurations,
-          [configId]: { ...config, grid: newGrid },
-        },
-      };
-    }
-    case 'ADD_DESK_TAG_TO_STUDENT': {
-      const { tagId, classId, student } = action.payload;
-      const cls = state.classes[classId];
-      if (!cls) return state;
-      var updatedStudents = state.students
-      updatedStudents[student.id] = {
-        ...student,
-        deskTagIds: [
-          ...student.deskTagIds,
-          tagId
-        ]
+    case 'EDIT_GROUP': {
+      const { groupsConfigId, updatedGroup} = action.payload;
+      const groupsConfig : GroupsConfiguration = state.groupsConfigurations[groupsConfigId];
+      if (groupsConfig == undefined) {
+        return state;
       }
+      const modifiedStudentGroups = groupsConfig.studentGroups.map(x => {
+        if (x.id == updatedGroup.id) {
+          return updatedGroup
+        }
+        return x;
+      })
       return {
         ...state,
-        students: updatedStudents,
+        groupsConfigurations: {
+          ...state.groupsConfigurations,
+          [groupsConfigId]: {
+            ...groupsConfig,
+            studentGroups: modifiedStudentGroups
+          }
+        }
       };
     }
-    case 'REMOVE_DESK_TAG_FROM_STUDENT': {
-      const { tagId, classId, student } = action.payload;
-      const cls = state.classes[classId];
-      if (!cls) return state;
-      var updatedStudents = state.students
-      updatedStudents[student.id] = {
-        ...student,
-        deskTagIds: student.deskTagIds.filter(x => x != tagId)
-      }
-      return {
-        ...state,
-        students: updatedStudents,
-      };
-    }
-    case 'EDIT_STUDENTS_ASSIGNED_TO_DESK_TAG': {
+
+    case 'EDIT_STUDENTS_ASSIGNED_TO_TAG': {
       const { tagId, studentIds } = action.payload;
       const selectedStudentIds = new Set(studentIds);
 
       const updatedStudents = Object.fromEntries(
         Object.entries(state.students).map(([studentId, student]) => {
-          const hasTag = student.deskTagIds.includes(tagId);
+          const hasTag = student.tagIds.includes(tagId);
           const shouldHaveTag = selectedStudentIds.has(studentId);
 
           return [
             studentId,
             {
               ...student,
-              deskTagIds: shouldHaveTag
+              tagIds: shouldHaveTag
                 ? hasTag
-                  ? student.deskTagIds
-                  : [...student.deskTagIds, tagId]
-                : student.deskTagIds.filter((id) => id !== tagId),
+                  ? student.tagIds
+                  : [...student.tagIds, tagId]
+                : student.tagIds.filter((id) => id !== tagId),
             },
           ];
         })
@@ -866,7 +798,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...newRow[col],
         allowsStudents: true,
         hasDesk: false,
-        deskTagIds: []
+        tagIds: []
       };
       newGrid[row] = newRow;
       return {
@@ -894,7 +826,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
               ...newGrid[row][col],
               allowsStudents: true,
               hasDesk: true,
-              deskTagIds: []
+              tagIds: []
             }
             hasAddedDesk = true;
             break;
@@ -946,6 +878,25 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_ACTIVE_GROUPS_CONFIGURATION': {
       const { classId, groupsId } = action.payload;
+      if (groupsId != null) {
+        return {
+        ...state,
+        groupsConfigurations: {
+          ...state.groupsConfigurations,
+          [groupsId]: {
+            ...state.groupsConfigurations[groupsId],
+            selectedGroupId: null
+          }
+        },
+        classes: {
+          ...state.classes,
+          [classId]: {
+            ...state.classes[classId],
+            activeGroupsConfigurationId: groupsId
+          }
+        }
+      }
+      }
       return {
         ...state,
         classes: {
@@ -1009,6 +960,20 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         groupsConfigurations: {
           ...state.groupsConfigurations,
           [updatedGroupsConfiguration.id]: updatedGroupsConfiguration
+        }
+      }
+    }
+
+    case 'SET_ACTIVE_GROUP': {
+      const {groupsConfigId, selectedGroupId} = action.payload;
+      return {
+        ...state,
+        groupsConfigurations: {
+          ...state.groupsConfigurations,
+          [groupsConfigId]: {
+            ...state.groupsConfigurations[groupsConfigId],
+            selectedGroupId: selectedGroupId
+          }
         }
       }
     }

@@ -4,7 +4,7 @@ import { useActiveClass } from "../app-context";
 import ClassStudentList from "./class-student-list";
 import SeatingConfigEditor from "./seating-config-editor";
 import ClassRulesEditor from "./class-rules-editor";
-import DeskTagsEditor from "./desk-tags-editor";
+import TagsEditor from "./tags-editor";
 import GroupsEditor from "./groups-editor";
 
 export default function ClassEditor() {
@@ -24,7 +24,7 @@ export default function ClassEditor() {
                 <div>
                     {selectedSidebarTab == "Students" && <ClassStudentList></ClassStudentList>}
                     {selectedSidebarTab == "Rules" && <ClassRulesEditor></ClassRulesEditor>}
-                    {selectedSidebarTab == "Tags" && <DeskTagsEditor></DeskTagsEditor>}  
+                    {selectedSidebarTab == "Tags" && <TagsEditor></TagsEditor>}  
                 </div>
                 
             </div>

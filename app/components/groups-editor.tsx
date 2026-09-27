@@ -1,5 +1,5 @@
 import "../styles/groups-editor.css";
-import { useMemo, useState } from "react";
+import { useMemo, useState, MouseEvent } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
 import { GroupsConfiguration, Student, CustomOption, SelectNumberOption, StudentGroup } from "../app-state";
 import { useToast } from "./toast-context";
@@ -7,14 +7,18 @@ import Select, { ActionMeta, SingleValue } from "react-select";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
 import { v4 as uuid } from 'uuid'
 import StudentGroupRow from "./student-group-row";
+import GroupEditor from "./group-editor";
+import { FiEdit2 } from "react-icons/fi";
+import ShufflePreferencesModal from "./shuffle-preferences-modal";
 
 
 
 export default function GroupsEditor() {
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents, groupsConfigurations: allGroupsConfigurations } = useAppState();
+    const { students: allStudents, groupsConfigurations: allGroupsConfigurations, tags: allTags } = useAppState();
     const toast = useToast();
+    const [isShufflePreferencesModalOpen, setIsShufflePreferencesModalOpen] = useState(false)
     const [useAllStudents, setUseAllStudents] = useState(true);
     const [numberOfGroups, setNumberOfGroups] = useState(1);
     if (activeClass == undefined) {
@@ -42,7 +46,7 @@ export default function GroupsEditor() {
                     id: uuid(),
                     name: `Group ${i + 1}`,
                     studentIds: [],
-                    deskTagIds: []
+                    tagIds: []
                 }
             )
         }
@@ -76,13 +80,13 @@ export default function GroupsEditor() {
         dispatch({ type: 'SET_ACTIVE_GROUPS_CONFIGURATION', payload: { classId: activeClass.id, groupsId: null } });
     }
 
-    function updateGroupsConfiguration(updatedGroupsConfiguration : GroupsConfiguration) {
+    function updateGroupsConfiguration(updatedGroupsConfiguration: GroupsConfiguration) {
         if (activeClass == undefined) {
             return;
         }
         dispatch({ type: 'EDIT_GROUPS_CONFIGURATION', payload: { updatedGroupsConfiguration: updatedGroupsConfiguration } });
 
-        
+
     }
 
     function updateGroup(updatedGroup: StudentGroup) {
@@ -140,6 +144,37 @@ export default function GroupsEditor() {
     }
 
 
+    function onGroupSelected(event : MouseEvent<HTMLButtonElement>, groupdId: string) {
+        event.stopPropagation()
+        if (groupsConfiguration == undefined) {
+            return;
+        }
+        dispatch({ type: 'SET_ACTIVE_GROUP', payload: { groupsConfigId: groupsConfiguration.id, selectedGroupId: groupdId } });
+    }
+
+    function clearSelectedGroup() {
+        if (groupsConfiguration == undefined) {
+            return
+        }
+        if (groupsConfiguration.selectedGroupId == null) {
+            return;
+        }
+        dispatch({ type: 'SET_ACTIVE_GROUP', payload: { groupsConfigId: groupsConfiguration.id, selectedGroupId: null } });
+    }
+
+    function shuffleGroups() {
+
+    }
+
+    function openShufflePreferencesModal() {
+        setIsShufflePreferencesModalOpen(true);
+    }
+
+    function onCloseShufflePreferencesModal() {
+        setIsShufflePreferencesModalOpen(false);
+    }
+
+
     return (
         <div className="groups-editor">
             {groupsConfiguration == undefined &&
@@ -184,13 +219,14 @@ export default function GroupsEditor() {
                 </div>
             }
             {groupsConfiguration &&
-                <div>
+                <div  onClick={clearSelectedGroup}>
                     <div className="current-groups-config-header-container">
                         <input className="current-groups-config-header" value={groupsConfiguration.name} onChange={(e) => updateGroupsConfiguration({ ...groupsConfiguration, name: e.target.value })} />
                     </div>
                     <div className="current-group-options-container">
                         <button onClick={onClearActiveGroupsConfigurationId} className="default-button">Back</button>
-                        <button onClick={onClearActiveGroupsConfigurationId} className="default-button">New Groups</button>
+                        <button onClick={() => setIsShufflePreferencesModalOpen(true)} className="default-button">Shuffle Preferences</button>
+                        <button onClick={onClearActiveGroupsConfigurationId} className="default-button">Shuffle</button>
                     </div>
                     <div className="groups-grid">
                         <DragDropProvider
@@ -202,27 +238,41 @@ export default function GroupsEditor() {
                                 return (
                                     <div className="student-group" key={x.id}>
                                         <div className="student-group-header-container">
-                                            <input className="student-group-header" value={x.name} onChange={(e) => updateGroup({ ...x, name: e.target.value })} />
+                                            <p className="student-group-header">{x.name}</p>
+                                            <button className="student-group-select-button" onClick={(e) => onGroupSelected(e, x.id)}>
+                                                <FiEdit2></FiEdit2>
+                                            </button>
                                         </div>
-
-
                                         <ul>
-
                                             {x.studentIds.map(y => {
                                                 return (
                                                     <StudentGroupRow key={`slot-${y}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={y} id={`slot-${y}`}></StudentGroupRow>
                                                 )
                                             })}
                                             <StudentGroupRow key={`slot-${x.id}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={null} id={`slot-${x.id}`}></StudentGroupRow>
-
+                                        </ul>
+                                        <ul className="group-tag-marker-container">
+                                            {x.tagIds.map((tagId) => {
+                                                return <li
+                                                    className="group-tag-marker"
+                                                    key={tagId}
+                                                    style={{
+                                                        backgroundColor: `${allTags[tagId].color}`
+                                                    }}
+                                                ></li>
+                                            })}
                                         </ul>
                                     </div>
+
                                 )
                             })}
                         </DragDropProvider>
                     </div>
+                    <ShufflePreferencesModal open={isShufflePreferencesModalOpen} onClose={onCloseShufflePreferencesModal}></ShufflePreferencesModal>
                 </div>
+                
             }
+            <GroupEditor></GroupEditor>
         </div>
     )
 }

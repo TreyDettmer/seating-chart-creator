@@ -81,7 +81,7 @@ export default function SeatingConfigList(
                     hasDesk: i < activeClass.studentIds.length ? true : false,
                     allowsStudents: true,
                     studentId: i < activeClass.studentIds.length ? activeClass.studentIds[i] : null,
-                    deskTagIds: []
+                    tagIds: []
                 })
                 i++;
             }

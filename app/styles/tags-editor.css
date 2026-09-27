@@ -1,17 +1,17 @@
 @import '../globals.css';
 
-.desk-tags-editor {
+.tags-editor {
   background: var(--background);
   color: var(--foreground);
   width: 500px;
 }
 
-.desk-tags-editor-header {
+.tags-editor-header {
   font-size: x-large;
   font-weight: bold;
 }
 
-.desk-tags-editor-row {
+.tags-editor-row {
   width: 500px;
   display: flex;
   flex-direction: row;
@@ -21,7 +21,7 @@
   /* border-bottom: 2px solid var(--foreground); */
 }
 
-.desk-tags-editor-remove-group-button {
+.tags-editor-remove-group-button {
   background: var(--background);
   color: var(--foreground);
   padding: 5px;
@@ -29,6 +29,6 @@
   cursor: pointer;
 }
 
-.desk-tags-editor-remove-group-button:hover {
+.tags-editor-remove-group-button:hover {
   background: var(--background2);
 }

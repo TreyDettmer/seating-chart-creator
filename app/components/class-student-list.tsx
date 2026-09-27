@@ -58,7 +58,7 @@ export default function ClassStudentList() {
                         gender: rowData.Gender,
                         isEsl: false,
                         iepDesc: "",
-                        deskTagIds: [],
+                        tagIds: [],
                         nameAbbr: "",
                         isPresent: true
                     }
@@ -111,7 +111,7 @@ export default function ClassStudentList() {
             gender: newStudentInfo.gender,
             isEsl: newStudentInfo.isEsl,
             iepDesc: newStudentInfo.iepDesc.trim(),
-            deskTagIds: [],
+            tagIds: [],
             nameAbbr: "",
             isPresent: true
         }
