@@ -1,7 +1,7 @@
 import "../styles/groups-editor.css";
 import { useMemo, useState, MouseEvent } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
-import { GroupsConfiguration, Student, CustomOption, SelectNumberOption, StudentGroup } from "../app-state";
+import { GroupsConfiguration, Student, CustomOption, SelectNumberOption, StudentGroup, TagWithStudents, KeepApartGroup, KeepTogetherGroup } from "../app-state";
 import { useToast } from "./toast-context";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
@@ -16,7 +16,7 @@ import ShufflePreferencesModal from "./shuffle-preferences-modal";
 export default function GroupsEditor() {
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents, groupsConfigurations: allGroupsConfigurations, tags: allTags } = useAppState();
+    const { students: allStudents, groupsConfigurations: allGroupsConfigurations, tags: allTags, shufflePreferences, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups } = useAppState();
     const toast = useToast();
     const [isShufflePreferencesModalOpen, setIsShufflePreferencesModalOpen] = useState(false)
     const [useAllStudents, setUseAllStudents] = useState(true);
@@ -29,6 +29,8 @@ export default function GroupsEditor() {
         const student = allStudents[id];
         return student;
     });
+    const keepApartGroups: KeepApartGroup[] = activeClass.keepApartGroupIds.map(x => allKeepApartGroups[x])
+    const keepTogetherGroups: KeepTogetherGroup[] = activeClass.keepTogetherGroupIds.map(x => allKeepTogetherGroups[x])
     const groupsConfigurations: GroupsConfiguration[] = Object.values(allGroupsConfigurations).filter(x => x.classId == activeClass.id);
     const groupsConfiguration: GroupsConfiguration | undefined = allGroupsConfigurations[activeClass.activeGroupsConfigurationId || ''];
     var numberOfGroupsOptions: SelectNumberOption[] = students.map((x, index) => {
@@ -144,7 +146,7 @@ export default function GroupsEditor() {
     }
 
 
-    function onGroupSelected(event : MouseEvent<HTMLButtonElement>, groupdId: string) {
+    function onGroupSelected(event: MouseEvent<HTMLButtonElement>, groupdId: string) {
         event.stopPropagation()
         if (groupsConfiguration == undefined) {
             return;
@@ -162,8 +164,267 @@ export default function GroupsEditor() {
         dispatch({ type: 'SET_ACTIVE_GROUP', payload: { groupsConfigId: groupsConfiguration.id, selectedGroupId: null } });
     }
 
-    function shuffleGroups() {
+    function shuffleStudents() {
+        if (activeClass === undefined || groupsConfiguration === undefined) {
+            return
+        }
 
+
+
+        var groupSetTagsMap: Map<string, TagWithStudents[]> = new Map();
+        var studentGroups: StudentGroup[] = [...groupsConfiguration.studentGroups]
+
+        for (const group of studentGroups) {
+            var existingTagsWithStudents: TagWithStudents[] = []
+            for (const tagId of group.tagIds) {
+                const tag = allTags[tagId];
+                const newTagWithStudents: TagWithStudents = { tagId: tagId, priority: tag.priority, studentIds: students.filter(s => s.tagIds.includes(tagId)).map(s => s.id) }
+                existingTagsWithStudents.push(newTagWithStudents)
+            }
+            groupSetTagsMap.set(group.id, existingTagsWithStudents);
+        }
+
+
+
+
+        // Start from a random assignment: shuffle desks, take the first N for students,
+        // the rest start out (and may remain) empty.
+        const shuffledGroupIds = [...studentGroups.map(x => x.id)].sort(() => Math.random() - 0.5);
+        const studentToGroup: Map<string, string> = new Map();
+        students.forEach((student, i) => {
+            studentToGroup.set(student.id, shuffledGroupIds[i % shuffledGroupIds.length]);
+        });
+
+
+
+        let currentScore = scoreAssignment(
+            studentToGroup,
+            groupSetTagsMap
+        );
+
+        let bestAssignment = new Map(studentToGroup);
+        let bestGroupSetTagsMap = new Map(groupSetTagsMap);
+        let bestScore = currentScore;
+
+        for (let iter = 0; iter < shufflePreferences.iterations; iter++) {
+            // Exponential cooling schedule
+            const t = shufflePreferences.explorationStrengthStart * Math.pow(shufflePreferences.explorationStrengthEnd / shufflePreferences.explorationStrengthStart, iter / shufflePreferences.iterations);
+
+
+
+
+            let undoMove;
+
+
+            const idxA = Math.floor(Math.random() * students.length);
+            let idxB = Math.floor(Math.random() * students.length);
+            while (idxB === idxA) idxB = Math.floor(Math.random() * students.length);
+
+            const studentA = students[idxA].id;
+            const studentB = students[idxB].id;
+            const groupdId1 = studentToGroup.get(studentA);
+            const groupdId2 = studentToGroup.get(studentB);
+
+            studentToGroup.set(studentA, groupdId2!);
+            studentToGroup.set(studentB, groupdId1!);
+
+            undoMove = () => {
+                studentToGroup.set(studentA, groupdId1!);
+                studentToGroup.set(studentB, groupdId2!);
+            };
+
+
+            const newScore = scoreAssignment(
+                studentToGroup,
+                groupSetTagsMap
+            );
+            const delta = newScore - currentScore;
+
+            if (delta >= 0 || Math.random() < Math.exp(delta / t)) {
+                // accept (better, or accepted anyway per annealing schedule)
+                currentScore = newScore;
+                if (currentScore > bestScore) {
+                    bestScore = currentScore;
+                    bestAssignment = new Map(studentToGroup);
+                    bestGroupSetTagsMap = new Map(groupSetTagsMap);
+                }
+            } else {
+                // reject: undo the move
+                undoMove();
+            }
+        }
+
+        const newStudentGroups: StudentGroup[] = studentGroups.map(group => ({
+        ...group,
+        studentIds: []
+        }));
+
+        const studentIds = Array.from(bestAssignment.keys());
+        for (let i = 0; i < studentIds.length; i++) {
+            newStudentGroups.find(x => x.id == bestAssignment.get(studentIds[i]))?.studentIds.push(studentIds[i]);
+        }
+
+
+        var issues: string[] = getIssuesWithShuffle(bestAssignment, bestGroupSetTagsMap)
+        for (let i = 0; i < issues.length; i++) {
+            toast.open(
+                toast.toastWarning("Shuffle Issue", issues[i])
+            )
+        }
+
+        dispatch({ type: 'EDIT_GROUPS_CONFIGURATION', payload: { updatedGroupsConfiguration: { ...groupsConfiguration, studentGroups: newStudentGroups } } });
+
+
+
+    }
+
+    function scoreAssignment(
+        studentToGroup: Map<string, string>,
+        groupSetTagsMap: Map<string, TagWithStudents[]>,
+    ) {
+        let score = 0;
+
+        // 1. Desk-tag preference
+        if (!shufflePreferences.ignoreTags) {
+            for (const [studentId, groupId] of studentToGroup.entries()) {
+                const deskTags: TagWithStudents[] | undefined = groupSetTagsMap.get(groupId)
+                if (deskTags == undefined) {
+                    continue;
+                }
+                let bestPriority: number = 1000.0;
+                for (const tag of deskTags) {
+                    if (tag.studentIds.includes(studentId)) {
+                        if (tag.priority < bestPriority) {
+                            bestPriority = tag.priority
+                        }
+                    }
+                }
+                if (bestPriority != 1000.0) {
+                    if (!shufflePreferences.ignoreTagPriorities) {
+                        score += Object.entries(allTags).length / bestPriority * shufflePreferences.tagsInfluence;
+                    } else {
+                        score += shufflePreferences.tagsInfluence;
+                    }
+                }
+            }
+        }
+
+        if (!shufflePreferences.ignoreKeepTogetherGroups) {
+            // 2. Keep-together groups
+            for (const group of keepTogetherGroups) {
+                if (group.studentIds.length < 2) {
+                    continue
+                }
+                if (group.useAnd) {
+                    let areAllTogether = true;
+                    let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const groupId1 = studentToGroup.get(group.studentIds[i]);
+                            const groupId2 = studentToGroup.get(group.studentIds[j]);
+
+                            if (groupId1 && groupId2 && groupId1 != groupId2) {
+                                areAllTogether = false
+                            }
+                        }
+                    }
+                    if (areAllTogether) {
+                        score += shufflePreferences.keepTogetherInfluence * pairCount;
+                    }
+                } else {
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const groupId1 = studentToGroup.get(group.studentIds[i]);
+                            const groupId2 = studentToGroup.get(group.studentIds[j]);
+
+                            if (groupId1 && groupId2 && groupId1 == groupId2) {
+                                score += shufflePreferences.keepTogetherInfluence;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!shufflePreferences.ignoreKeepApartGroups) {
+            // 3. Keep-apart groups
+            for (const group of keepApartGroups) {
+                if (group.studentIds.length < 2) {
+                    continue
+                }
+                if (group.useAnd) {
+                    let areAllSeparate = true
+                    let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const groupId1 = studentToGroup.get(group.studentIds[i]);
+                            const groupId2 = studentToGroup.get(group.studentIds[j]);
+                            if (groupId1 && groupId2 && groupId1 == groupId2) {
+                                areAllSeparate = false
+                            }
+                        }
+                    }
+                    if (areAllSeparate == false) {
+                        score -= shufflePreferences.keepApartInfluence * pairCount;
+                    }
+                } else {
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const groupId1 = studentToGroup.get(group.studentIds[i]);
+                            const groupId2 = studentToGroup.get(group.studentIds[j]);
+                            if (groupId1 && groupId2 && groupId1 == groupId2) {
+                                score -= shufflePreferences.keepApartInfluence;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return score;
+    }
+
+    function getIssuesWithShuffle(
+        studentToGroup: Map<string, string>,
+        groupSetTagsMap: Map<string, TagWithStudents[]>,
+    ): string[] {
+
+        var issues: string[] = [];
+        if (!shufflePreferences.ignoreKeepApartGroups) {
+            // 3. Keep-apart groups
+            for (const group of keepApartGroups) {
+                if (group.studentIds.length < 2) {
+                    continue
+                }
+                if (group.useAnd) {
+                    let areAllSeparate = true
+                    let pairCount = (group.studentIds.length * (group.studentIds.length - 1)) / 2;
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const groupId1 = studentToGroup.get(group.studentIds[i]);
+                            const groupId2 = studentToGroup.get(group.studentIds[j]);
+                            if (groupId1 && groupId2 && groupId1 == groupId2) {
+                                areAllSeparate = false
+                            }
+                        }
+                    }
+                    if (areAllSeparate == false) {
+                        issues.push(`Students ${group.studentIds.map(x => allStudents[x].firstName).join(' and ')} are together.`);
+                    }
+                } else {
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const groupId1 = studentToGroup.get(group.studentIds[i]);
+                            const groupId2 = studentToGroup.get(group.studentIds[j]);
+                            if (groupId1 && groupId2 && groupId1 == groupId2) {
+                                issues.push(`Students ${[group.studentIds[i], group.studentIds[j]].map(x => allStudents[x].firstName).join(' and ')} are together.`)
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return issues
     }
 
     function openShufflePreferencesModal() {
@@ -172,6 +433,10 @@ export default function GroupsEditor() {
 
     function onCloseShufflePreferencesModal() {
         setIsShufflePreferencesModalOpen(false);
+    }
+
+    function onDeleteGroup(groupId : string) {
+
     }
 
 
@@ -210,8 +475,9 @@ export default function GroupsEditor() {
                     <ul className="existing-groups-container">
                         {groupsConfigurations.map(x => {
                             return (
-                                <li className="existing-groups-row" onClick={() => onExistingGroupsConfigurationSelected(x.id)} key={x.id}>
-                                    {x.name}
+                                <li className="existing-groups-row" key={x.id}>
+                                    <button className="existing-group-button" onClick={() => onExistingGroupsConfigurationSelected(x.id)}>{x.name}</button>
+                                    <button className="existing-group-remove-button" onClick={() => onDeleteGroup(x.id)}>X</button>
                                 </li>
                             )
                         })}
@@ -219,14 +485,14 @@ export default function GroupsEditor() {
                 </div>
             }
             {groupsConfiguration &&
-                <div  onClick={clearSelectedGroup}>
+                <div onClick={clearSelectedGroup}>
                     <div className="current-groups-config-header-container">
                         <input className="current-groups-config-header" value={groupsConfiguration.name} onChange={(e) => updateGroupsConfiguration({ ...groupsConfiguration, name: e.target.value })} />
                     </div>
                     <div className="current-group-options-container">
                         <button onClick={onClearActiveGroupsConfigurationId} className="default-button">Back</button>
                         <button onClick={() => setIsShufflePreferencesModalOpen(true)} className="default-button">Shuffle Preferences</button>
-                        <button onClick={onClearActiveGroupsConfigurationId} className="default-button">Shuffle</button>
+                        <button onClick={shuffleStudents} className="default-button">Shuffle</button>
                     </div>
                     <div className="groups-grid">
                         <DragDropProvider
@@ -270,7 +536,7 @@ export default function GroupsEditor() {
                     </div>
                     <ShufflePreferencesModal open={isShufflePreferencesModalOpen} onClose={onCloseShufflePreferencesModal}></ShufflePreferencesModal>
                 </div>
-                
+
             }
             <GroupEditor></GroupEditor>
         </div>

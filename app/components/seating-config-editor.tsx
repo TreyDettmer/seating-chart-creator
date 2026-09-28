@@ -1,7 +1,7 @@
 import "../styles/seating-config-editor.css";
 import "../styles/modal.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { FloorCell, KeepApartGroup, KeepTogetherGroup, SeatingConfiguration, ShufflePreferences, ShuffleResult, Student } from "../app-state";
+import { FloorCell, KeepApartGroup, KeepTogetherGroup, SeatingConfiguration, ShufflePreferences, ShuffleResult, Student, TagWithStudents } from "../app-state";
 
 import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";
@@ -15,14 +15,16 @@ import ShufflePreferencesModal from "./shuffle-preferences-modal";
 export default function SeatingConfigEditor() {
     const activeClass = useActiveClass();
     const toast = useToast()
-    const { students: allStudents, 
-        seatingConfigurations: allSeatingConfigs, 
-        keepApartGroups: allKeepApartGroups, 
-        keepTogetherGroups: allKeepTogetherGroups, 
+    const { students: allStudents,
+        seatingConfigurations: allSeatingConfigs,
+        keepApartGroups: allKeepApartGroups,
+        keepTogetherGroups: allKeepTogetherGroups,
         tags: allTags, shufflePreferences } = useAppState();
     const [isModalOpen, setIsModalOpen] = useState(false)
     const dispatch = useAppDispatch();
     const activeConfig = useActiveSeatingConfig()
+
+
 
 
     if (activeClass === undefined) {
@@ -168,7 +170,9 @@ export default function SeatingConfigEditor() {
                 }
             }
             if (hasMovedStudent === false) {
-                console.log("Not enough available desks to move students off of restricted desks")
+                toast.open(
+                    toast.toastError("Error", "Not enough available desks to move students off of restricted desks.")
+                )
                 return
             }
         }
@@ -187,18 +191,16 @@ export default function SeatingConfigEditor() {
             adjacencyMap.set(cell.id, getAdjacentFloorCells(cell, grid, activeConfig.rows, activeConfig.cols).filter(x => x != null).map((x) => x.id));
         }
 
+        var deskSetTagsMap: Map<string, TagWithStudents[]> = new Map();
 
-
-
-        var deskSetPreferenceMap: Map<string, Set<string>> = new Map();
         for (const cell of desks) {
-            const set: Set<string> = new Set();
+            var existingTagsWithStudents: TagWithStudents[] = []
             for (const tagId of cell.tagIds) {
-                students.filter(x => x.tagIds.includes(tagId)).map(x =>
-                    set.add(x.id)
-                )
+                const tag = allTags[tagId];
+                const newTagWithStudents: TagWithStudents = { tagId: tagId, priority: tag.priority, studentIds: students.filter(s => s.tagIds.includes(tagId)).map(s => s.id) }
+                existingTagsWithStudents.push(newTagWithStudents)
             }
-            deskSetPreferenceMap.set(cell.id, set);
+            deskSetTagsMap.set(cell.id, existingTagsWithStudents);
         }
 
 
@@ -219,7 +221,7 @@ export default function SeatingConfigEditor() {
 
         let currentScore = scoreAssignment(
             studentToDesk,
-            deskSetPreferenceMap,
+            deskSetTagsMap,
             adjacencyMap
         );
 
@@ -275,7 +277,7 @@ export default function SeatingConfigEditor() {
 
             const newScore = scoreAssignment(
                 studentToDesk,
-                deskSetPreferenceMap,
+                deskSetTagsMap,
                 adjacencyMap
             );
             const delta = newScore - currentScore;
@@ -301,9 +303,13 @@ export default function SeatingConfigEditor() {
                 } else {
                     grid[rowIndex][colIndex].studentId = null
                 }
-
-
             }
+        }
+        var issues : string[] = getIssuesWithShuffle(bestAssignment,adjacencyMap)
+        for (let i = 0; i < issues.length; i ++) {
+            toast.open(
+                toast.toastWarning("Shuffle Issue", issues[i])
+            )
         }
 
         dispatch({ type: 'UPDATE_SEATING_CONFIG', payload: { configId: activeConfig.id, newConfig: { ...activeConfig, grid: grid } } });
@@ -311,7 +317,7 @@ export default function SeatingConfigEditor() {
 
     function scoreAssignment(
         studentToDesk: Map<string, string>,
-        deskPrefSets: Map<string, Set<string>>,
+        deskSetTagsMap: Map<string, TagWithStudents[]>,
         adjacencyMap: Map<string, string[]>
     ) {
         let score = 0;
@@ -319,8 +325,25 @@ export default function SeatingConfigEditor() {
         // 1. Desk-tag preference
         if (!shufflePreferences.ignoreTags) {
             for (const [studentId, deskId] of studentToDesk.entries()) {
-                const prefSet = deskPrefSets.get(deskId);
-                if (prefSet && prefSet.has(studentId)) score += shufflePreferences.tagsInfluence;
+                const deskTags: TagWithStudents[] | undefined = deskSetTagsMap.get(deskId)
+                if (deskTags == undefined) {
+                    continue;
+                }
+                let bestPriority: number = 1000.0;
+                for (const tag of deskTags) {
+                    if (tag.studentIds.includes(studentId)) {
+                        if (tag.priority < bestPriority) {
+                            bestPriority = tag.priority
+                        }
+                    }
+                }
+                if (bestPriority != 1000.0) {
+                    if (!shufflePreferences.ignoreTagPriorities) {
+                        score += Object.entries(allTags).length / bestPriority * shufflePreferences.tagsInfluence;
+                    } else {
+                        score += shufflePreferences.tagsInfluence;
+                    }
+                }
             }
         }
 
@@ -397,6 +420,46 @@ export default function SeatingConfigEditor() {
             }
         }
         return score;
+    }
+
+    function getIssuesWithShuffle(
+        studentToDesk: Map<string, string>,
+        adjacencyMap: Map<string, string[]>) : string[] {
+        
+        var issues : string[] = []
+        if (!shufflePreferences.ignoreKeepApartGroups) {
+            for (const group of keepApartGroups) {
+                if (group.studentIds.length < 2) {
+                    continue
+                }
+                if (group.useAnd) {
+                    let areAllSeparate = true
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const deskA = studentToDesk.get(group.studentIds[i]);
+                            const deskB = studentToDesk.get(group.studentIds[j]);
+                            if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                                areAllSeparate = false
+                            }
+                        }
+                    }
+                    if (areAllSeparate == false) {
+                        issues.push(`Students ${group.studentIds.map(x => allStudents[x].firstName).join(' and ')} are adjacent.`)
+                    }
+                } else {
+                    for (let i = 0; i < group.studentIds.length; i++) {
+                        for (let j = i + 1; j < group.studentIds.length; j++) {
+                            const deskA = studentToDesk.get(group.studentIds[i]);
+                            const deskB = studentToDesk.get(group.studentIds[j]);
+                            if (deskA && deskB && adjacencyMap!.get(deskA)!.includes(deskB)) {
+                                issues.push(`Students ${[group.studentIds[i], group.studentIds[j]].map(x => allStudents[x].firstName).join(' and ')} are adjacent.`)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return issues;
     }
 
 

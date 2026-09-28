@@ -32,7 +32,33 @@
 }
 
 .existing-groups-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.existing-group-button {
   cursor: pointer;
+
+  padding: 5px;
+  border-radius: 8px;
+  margin: 5px;
+}
+
+.existing-group-button:hover {
+  background: var(--background2);
+}
+
+.existing-group-remove-button {
+  background: var(--background);
+  color: var(--foreground);
+  padding: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.existing-group-remove-button:hover {
+  background: var(--background2);
 }
 
 .selectable-option {

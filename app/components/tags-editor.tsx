@@ -2,9 +2,33 @@ import "../styles/tags-editor.css";
 import "../styles/modal.css";
 import { useState } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
+import { useSortable, isSortable } from '@dnd-kit/react/sortable';
 import { Tag } from "../app-state";
 import Modal from "./modal";
 import { v4 as uuid } from 'uuid'
+import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
+
+interface SortableTagRowProps {
+    tag: Tag;
+    index: number;
+    onTagColorChanged: (tagId: string, newColor: string) => void;
+    onTagNameChanged: (tagId: string, newName: string) => void;
+    onDeleteTag: (tagId: string) => void;
+}
+
+function SortableTagRow(
+    { tag, index, onTagColorChanged, onTagNameChanged, onDeleteTag }: SortableTagRowProps) {
+    const { ref } = useSortable({ id: tag.id, index });
+
+    return (
+        <li ref={ref} className="tags-editor-row" key={tag.id}>
+            <p>{tag.priority}</p>
+            <input type="color" value={tag.color} onChange={(e) => onTagColorChanged(tag.id, e.target.value)}></input>
+            <input className="modal-text-input" value={tag.name} onChange={(e) => onTagNameChanged(tag.id, e.target.value)}></input>
+            <button className="tags-editor-remove-group-button" onClick={() => onDeleteTag(tag.id)}>X</button>
+        </li>
+    );
+}
 
 export default function TagsEditor() {
     const activeClass = useActiveClass();
@@ -75,7 +99,7 @@ export default function TagsEditor() {
             priority: Object.keys(tags).length + 1
         }
         setNewTagInfo({ name: "", color: "blue" })
-        dispatch({ type: 'CREATE_TAG', payload: { tag: newTag}});
+        dispatch({ type: 'CREATE_TAG', payload: { tag: newTag } });
     }
 
     function openTagCreationModal() {
@@ -85,22 +109,79 @@ export default function TagsEditor() {
         setIsTagCreationModalOpen(false)
     }
 
+    function onDragEnd(event: DragEndEvent) {
+        
+        if (event.canceled) {
+            return;
+        }
+
+        const { source } = event.operation;
+        if (!isSortable(source)) {
+            return
+        }
+
+        const {initialIndex: oldIndex, index: newIndex, id: sourceId } = source;
+        if (oldIndex == newIndex) {
+            return
+        }
+
+
+        const elementWithNewIndex = Object.values(tags).find(x => x.priority == newIndex + 1)
+        if (elementWithNewIndex == undefined) {
+            return
+        }
+        var oldPriority = tags[sourceId].priority;
+        var newPriority = tags[elementWithNewIndex.id].priority;
+        var newTags = { ...tags };
+        newTags[sourceId].priority = newPriority;
+        newTags[elementWithNewIndex.id].priority = oldPriority;
+        dispatch({ type: 'UPDATE_TAGS', payload: { newTags: newTags } });
+
+
+        // if (!event.operation.target) {
+        //     return;
+        // }
+        
+        // const sourceId = event.operation.source?.id as string;
+        // const targetId = event.operation.target?.id as string;
+
+        // if (sourceId == null || targetId == null) {
+        //     return;
+        // }
+        
+        // if (sourceId == targetId) {
+        //     return
+        // }
+        // console.log('Drag ended')
+        // var oldPriority = tags[sourceId].priority;
+        // var newPriority = tags[targetId].priority;
+        // var newTags = { ...tags };
+        // newTags[sourceId].priority = newPriority;
+        // newTags[targetId].priority = oldPriority;
+        // console.log(`Old: ${oldPriority}, New: ${newPriority}`)
+    }
+
     return (
         <div className="tags-editor">
 
             <p className="tags-editor-header" >Tags</p>
             <p className="tags-editor-subheader" >Easily keep students away from each other.</p>
-            <ul>
-                {Object.entries(tags).map(([tagId, tag]) => {
-                    return <li className="tags-editor-row" key={tagId}>
-                        <input type="color" value={tag.color} onChange={(e) => onTagColorChanged(tagId, e.target.value)}></input>
-                        <input className="modal-text-input" value={tag.name} onChange={(e) => onTagNameChanged(tagId, e.target.value)}></input>
-                        <button className="tags-editor-remove-group-button" onClick={() => onDeleteTag(tagId)}>X</button>
-                    </li>
+            <DragDropProvider
+                onDragStart={() => { }}
+                onDragMove={() => { }}
+                onDragOver={() => { }}
+                onDragEnd={onDragEnd}>
+                <ul>
+                    {Object.entries(tags).map((tagInfo) => {
+                        return { id: tagInfo[0], tag: tagInfo[1] }
+                    }
 
-                })}
-                
-            </ul>
+                    ).toSorted((t1, t2) => t1.tag.priority - t2.tag.priority).map((tagInfo, index) => {
+                        return <SortableTagRow key={tagInfo.id} tag={tagInfo.tag} index={index} onTagColorChanged={onTagColorChanged} onTagNameChanged={onTagNameChanged} onDeleteTag={onDeleteTag}></SortableTagRow>
+
+                    })}
+                </ul>
+            </DragDropProvider>
             <button className="default-button" onClick={openTagCreationModal}>Create New Tag</button>
             <Modal open={isTagCreationModalOpen} onClose={onCloseTagCreationModal}>
                 <div>

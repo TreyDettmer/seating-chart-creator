@@ -2,6 +2,7 @@ import "../styles/modal.css";
 import { useAppDispatch, useAppState } from "../app-context";
 import { ShufflePreferences } from "../app-state";
 import Modal from "./modal";
+import Toggle from "./toggle";
 
 export default function ShufflePreferencesModal(
     {open, onClose} : any
@@ -37,18 +38,35 @@ export default function ShufflePreferencesModal(
                     </div>
                     <div className="shuffle-preference-row">
                         <p>Ignore Keep Apart Groups</p>
-                        <input type="checkbox" checked={shufflePreferences.ignoreKeepApartGroups} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepApartGroups: e.target.checked })} />
-                        <p>{shufflePreferences.ignoreKeepApartGroups ? 'Yes' : 'No'}</p>
+                        <Toggle isChecked={shufflePreferences.ignoreKeepApartGroups} onChanged={(newValue) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepApartGroups: newValue })}></Toggle>
                     </div>
                     <div className="shuffle-preference-row">
                         <p>Ignore Keep Together Groups</p>
-                        <input type="checkbox" checked={shufflePreferences.ignoreKeepTogetherGroups} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepTogetherGroups: e.target.checked })} />
-                        <p>{shufflePreferences.ignoreKeepTogetherGroups ? 'Yes' : 'No'}</p>
+                        <Toggle isChecked={shufflePreferences.ignoreKeepTogetherGroups} onChanged={(newValue) => updateShufflePreferences({ ...shufflePreferences, ignoreKeepTogetherGroups: newValue })}></Toggle>
                     </div>
                     <div className="shuffle-preference-row">
                         <p>Ignore Tags</p>
-                        <input type="checkbox" checked={shufflePreferences.ignoreTags} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, ignoreTags: e.target.checked })} />
-                        <p>{shufflePreferences.ignoreTags ? 'Yes' : 'No'}</p>
+                        <Toggle isChecked={shufflePreferences.ignoreTags} onChanged={(newValue) => updateShufflePreferences({ ...shufflePreferences, ignoreTags: newValue })}></Toggle>
+
+                    </div>
+                    <div className="shuffle-preference-row">
+                        <p>Ignore Tag Priorities</p>
+                        <Toggle isChecked={shufflePreferences.ignoreTagPriorities} onChanged={(newValue) => updateShufflePreferences({ ...shufflePreferences, ignoreTagPriorities: newValue })}></Toggle>
+                    </div>
+                    <div className="shuffle-preference-row">
+                        <p>Keep Together Influence</p>
+                        <input type="range" step={.01} min="0.01" max="1.0" value={shufflePreferences.keepTogetherInfluence} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, keepTogetherInfluence: parseFloat(e.target.value) })} />
+                        <p>{shufflePreferences.keepTogetherInfluence.toFixed(2)}</p>
+                    </div>
+                    <div className="shuffle-preference-row">
+                        <p>Keep Apart Influence</p>
+                        <input type="range" step={.01} min="0.01" max="1.0" value={shufflePreferences.keepApartInfluence} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, keepApartInfluence: parseFloat(e.target.value) })} />
+                        <p>{shufflePreferences.keepApartInfluence.toFixed(2)}</p>
+                    </div>
+                    <div className="shuffle-preference-row">
+                        <p>Tags Influence</p>
+                        <input type="range" step={.01} min="0.01" max="1.0" value={shufflePreferences.tagsInfluence} onChange={(e) => updateShufflePreferences({ ...shufflePreferences, tagsInfluence: parseFloat(e.target.value) })} />
+                        <p>{shufflePreferences.tagsInfluence.toFixed(2)}</p>
                     </div>
                 </div>
                 <div className="flex flex-row justify-center">

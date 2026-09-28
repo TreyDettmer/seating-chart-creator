@@ -65,6 +65,7 @@ export type AppAction =
   | { type: 'SET_ACTIVE_GROUP'; payload: { groupsConfigId: string; selectedGroupId: string | null } }
   | { type: 'EDIT_GROUPS_CONFIGURATION'; payload: { updatedGroupsConfiguration: GroupsConfiguration; } }
   | { type: 'SWAP_STUDENTS_IN_GROUPS'; payload: { groupsId: string; sourceGroupId: string; targetGroupId: string; studentId1: string; studentId2: string | null } }
+  | { type: 'UPDATE_TAGS'; payload: { newTags: Record<string, Tag> } }
 
 export const CustomOption = (props: any) => {
   return (
@@ -101,15 +102,16 @@ export interface ShuffleResult {
 }
 
 export interface ShufflePreferences {
-  iterations : number;
-  explorationStrengthStart : number;
-  explorationStrengthEnd : number;
-  ignoreKeepApartGroups : boolean;
-  ignoreKeepTogetherGroups : boolean;
-  ignoreTags : boolean;
-  keepTogetherInfluence : number;
-  keepApartInfluence : number;
-  tagsInfluence : number;
+  iterations: number;
+  explorationStrengthStart: number;
+  explorationStrengthEnd: number;
+  ignoreKeepApartGroups: boolean;
+  ignoreKeepTogetherGroups: boolean;
+  ignoreTags: boolean;
+  ignoreTagPriorities: boolean;
+  keepTogetherInfluence: number;
+  keepApartInfluence: number;
+  tagsInfluence: number;
 }
 
 export const initialShufflePreferences: ShufflePreferences = {
@@ -119,9 +121,10 @@ export const initialShufflePreferences: ShufflePreferences = {
   ignoreKeepApartGroups: false,
   ignoreKeepTogetherGroups: false,
   ignoreTags: false,
-  keepTogetherInfluence: 8,
-  keepApartInfluence: 12,
-  tagsInfluence: 10,
+  ignoreTagPriorities: false,
+  keepTogetherInfluence: 0.4,
+  keepApartInfluence: 0.9,
+  tagsInfluence: 0.7,
 };
 
 export interface SelectOption {
@@ -196,6 +199,12 @@ export interface Tag {
   priority: number;
 }
 
+export interface TagWithStudents {
+  tagId: string;
+  priority: number;
+  studentIds: string[]
+}
+
 export interface AppState {
   students: Record<string, Student>;
   classes: Record<string, SchoolClass>;
@@ -205,7 +214,7 @@ export interface AppState {
   keepTogetherGroups: Record<string, KeepTogetherGroup>;
   tags: Record<string, Tag>;
   activeClassId: string | null;
-  shufflePreferences : ShufflePreferences;
+  shufflePreferences: ShufflePreferences;
 }
 export const initialAppState: AppState = {
   students: {},
@@ -235,7 +244,7 @@ export interface GroupsConfiguration {
   id: string;
   classId: string;
   name: string;
-  selectedGroupId : string | null;
+  selectedGroupId: string | null;
   studentGroups: StudentGroup[];
 }
 
@@ -410,7 +419,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'UPDATE_SEATING_CONFIG': {
-      const { configId, newConfig} = action.payload;
+      const { configId, newConfig } = action.payload;
 
       return {
         ...state,
@@ -643,7 +652,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'EDIT_TAG': {
-      const { tagId, tag} = action.payload;
+      const { tagId, tag } = action.payload;
       return {
         ...state,
         tags: {
@@ -736,8 +745,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'EDIT_GROUP': {
-      const { groupsConfigId, updatedGroup} = action.payload;
-      const groupsConfig : GroupsConfiguration = state.groupsConfigurations[groupsConfigId];
+      const { groupsConfigId, updatedGroup } = action.payload;
+      const groupsConfig: GroupsConfiguration = state.groupsConfigurations[groupsConfigId];
       if (groupsConfig == undefined) {
         return state;
       }
@@ -880,22 +889,22 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { classId, groupsId } = action.payload;
       if (groupsId != null) {
         return {
-        ...state,
-        groupsConfigurations: {
-          ...state.groupsConfigurations,
-          [groupsId]: {
-            ...state.groupsConfigurations[groupsId],
-            selectedGroupId: null
-          }
-        },
-        classes: {
-          ...state.classes,
-          [classId]: {
-            ...state.classes[classId],
-            activeGroupsConfigurationId: groupsId
+          ...state,
+          groupsConfigurations: {
+            ...state.groupsConfigurations,
+            [groupsId]: {
+              ...state.groupsConfigurations[groupsId],
+              selectedGroupId: null
+            }
+          },
+          classes: {
+            ...state.classes,
+            [classId]: {
+              ...state.classes[classId],
+              activeGroupsConfigurationId: groupsId
+            }
           }
         }
-      }
       }
       return {
         ...state,
@@ -910,7 +919,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'SWAP_STUDENTS_IN_GROUPS': {
-      const {groupsId, sourceGroupId, targetGroupId, studentId1, studentId2} = action.payload
+      const { groupsId, sourceGroupId, targetGroupId, studentId1, studentId2 } = action.payload
       const groupConfig = state.groupsConfigurations[groupsId];
       if (groupConfig == undefined) {
         return state;
@@ -942,19 +951,19 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         return x;
       })
       return {
-          ...state,
-          groupsConfigurations: {
-            ...state.groupsConfigurations,
-            [groupsId]: {
-              ...groupConfig,
-              studentGroups: studentGroups
-            }
+        ...state,
+        groupsConfigurations: {
+          ...state.groupsConfigurations,
+          [groupsId]: {
+            ...groupConfig,
+            studentGroups: studentGroups
           }
         }
+      }
     }
 
     case 'EDIT_GROUPS_CONFIGURATION': {
-      const {updatedGroupsConfiguration} = action.payload
+      const { updatedGroupsConfiguration } = action.payload
       return {
         ...state,
         groupsConfigurations: {
@@ -965,7 +974,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'SET_ACTIVE_GROUP': {
-      const {groupsConfigId, selectedGroupId} = action.payload;
+      const { groupsConfigId, selectedGroupId } = action.payload;
       return {
         ...state,
         groupsConfigurations: {
@@ -975,6 +984,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             selectedGroupId: selectedGroupId
           }
         }
+      }
+    }
+
+    case 'UPDATE_TAGS': {
+      const { newTags } = action.payload;
+      return {
+        ...state,
+        tags: newTags
       }
     }
 

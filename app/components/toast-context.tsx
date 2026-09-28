@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         setToasts((currentToasts) => currentToasts.filter((toast) => toast.id !== id));
     };
 
-    const open = (component: ReactNode, timeout = 5000) => {
+    const open = (component: ReactNode, timeout = 12000) => {
         const id = uuid();
         setToasts((currentToasts) => [...currentToasts, { id, component }]);
         window.setTimeout(() => close(id), timeout);
