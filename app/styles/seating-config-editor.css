@@ -42,9 +42,9 @@
 }
 
 .classroom-floor-grid {
-  height: 90%;
+  height: auto;
   background-color: yellowgreen;
-  aspect-ratio: 1 / 1;
+  /* aspect-ratio: 1 / 1; */
   display: grid;
   position: absolute;
   top: 50%;

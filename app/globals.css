@@ -64,6 +64,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: end;
+  z-index: 2;
 }
 
 .toast-close-button {

@@ -45,3 +45,11 @@
 .seating-config-edit-modal {
   padding: 10px;
 }
+
+.seating-config-creation-modal-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 1em;
+  margin: 1em;
+}

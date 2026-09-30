@@ -503,6 +503,9 @@ export default function SeatingConfigEditor() {
                                     style={{
                                         gridTemplateColumns: `repeat(${activeConfig.cols}, minmax(0, 1fr))`,
                                         gridTemplateRows: `repeat(${activeConfig.rows}, minmax(0, 1fr))`,
+                                        aspectRatio: `${activeConfig.cols} / ${activeConfig.rows}`,
+                                        width: `${Math.min(90, 90 * activeConfig.cols / activeConfig.rows)}%`,
+                                        
                                     }}
                                 >
                                     {activeConfig.grid.map(row => {
