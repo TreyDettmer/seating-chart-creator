@@ -1,9 +1,14 @@
 @import '../globals.css';
 
+.class-list-container {
+  display: flex;
+  flex-direction: row;
+  height: 5vh;
+}
 .class-list {
   display: flex;
   flex-direction: row;
-  height: 5vh
+  width: 100%;
 }
 
 .class-list-button {
@@ -24,6 +29,25 @@
 
 .class-list-button:hover {
   background: var(--background2);
+}
+
+.toggle-student-view-container {
+  margin-left: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  z-index: 3;
+}
+
+.toggle-student-view-container-active {
+  margin-left: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  z-index: 3;
+  filter: opacity(40%)
 }
 
 .class-creation-modal {

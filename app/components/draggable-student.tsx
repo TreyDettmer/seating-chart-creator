@@ -15,7 +15,7 @@ export default function DraggableStudentComponent(
     const { ref, isDragging } = useDraggable({ id: props.id })
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents, tags: allTags  } = useAppState();
+    const { students: allStudents, tags: allTags, studentViewEnabled  } = useAppState();
 
     if (activeClass == undefined) {
         return null;
@@ -48,8 +48,8 @@ export default function DraggableStudentComponent(
 
     return (
         <button onClick={onClick} ref={ref} className={className()}>
-            <p>{student.firstName}</p>
-            <ul className="student-tag-marker-container">
+            <p className={`draggable-student-name ${studentViewEnabled ? 'draggable-student-name-student-view' : ''}`}>{student.firstName}</p>
+            {!studentViewEnabled && <ul className="student-tag-marker-container">
                 {tags.map((tag) => {
                     return <li 
                     className="desk-tag-marker"
@@ -59,7 +59,7 @@ export default function DraggableStudentComponent(
                     }}
                     ></li>
                 })}
-            </ul>
+            </ul>}
         </button>
     )
 }

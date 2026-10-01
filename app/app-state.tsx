@@ -61,11 +61,13 @@ export type AppAction =
   | { type: 'ADD_DESK'; payload: { configId: string; } }
   | { type: 'EDIT_SHUFFLE_PREFERENCES'; payload: { updatedPreferences: ShufflePreferences; } }
   | { type: 'ADD_GROUPS_CONFIGURATION'; payload: { classId: string, groupsConfiguration: GroupsConfiguration; } }
+  | { type: 'REMOVE_GROUPS_CONFIGURATION'; payload: { groupsConfigId : string; } }
   | { type: 'SET_ACTIVE_GROUPS_CONFIGURATION'; payload: { classId: string, groupsId: string | null; } }
   | { type: 'SET_ACTIVE_GROUP'; payload: { groupsConfigId: string; selectedGroupId: string | null } }
   | { type: 'EDIT_GROUPS_CONFIGURATION'; payload: { updatedGroupsConfiguration: GroupsConfiguration; } }
   | { type: 'SWAP_STUDENTS_IN_GROUPS'; payload: { groupsId: string; sourceGroupId: string; targetGroupId: string; studentId1: string; studentId2: string | null } }
   | { type: 'UPDATE_TAGS'; payload: { newTags: Record<string, Tag> } }
+  | { type: 'TOGGLE_STUDENT_VIEW'; payload: { newValue: boolean } }
 
 export const CustomOption = (props: any) => {
   return (
@@ -215,6 +217,7 @@ export interface AppState {
   tags: Record<string, Tag>;
   activeClassId: string | null;
   shufflePreferences: ShufflePreferences;
+  studentViewEnabled: boolean;
 }
 export const initialAppState: AppState = {
   students: {},
@@ -225,7 +228,8 @@ export const initialAppState: AppState = {
   keepTogetherGroups: {},
   tags: {},
   activeClassId: null,
-  shufflePreferences: initialShufflePreferences
+  shufflePreferences: initialShufflePreferences,
+  studentViewEnabled: false
 };
 
 export interface SeatingConfiguration {
@@ -992,6 +996,23 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         tags: newTags
+      }
+    }
+
+    case 'TOGGLE_STUDENT_VIEW': {
+      const { newValue } = action.payload;
+      return {
+        ...state,
+        studentViewEnabled: newValue
+      }
+    }
+
+    case 'REMOVE_GROUPS_CONFIGURATION': {
+      const { groupsConfigId } = action.payload;
+      const { [groupsConfigId]: _removedTag, ...remainingGroupsConfigs } = state.groupsConfigurations;
+      return {
+        ...state,
+        groupsConfigurations: remainingGroupsConfigs
       }
     }
 

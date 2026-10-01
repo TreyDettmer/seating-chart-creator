@@ -16,6 +16,22 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  aspect-ratio: 1 / 1;
+  height: 80%;
+  width: 80%;
+  font-size: 1em;
+  overflow-x: auto;
+}
+
+.draggable-student-name {
+  font-size:0.75rem;
+  width: 100%;
+  text-wrap: wrap;
+  text-align: center;
+}
+
+.draggable-student-name-student-view {
+  font-size:1rem;
 }
 
 .student-tag-marker-container {

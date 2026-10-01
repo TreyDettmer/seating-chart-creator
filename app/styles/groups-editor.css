@@ -85,10 +85,27 @@
 
 .groups-grid {
   display: flex;
-  gap: 20px;
+  gap: 2rem;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-start;
+}
+
+.groups-grid-student-view {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--background);
+  z-index: 2;
+  display: flex;
+  gap: 2rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  padding-top: 25vh;
 }
 
 .student-group {
@@ -99,6 +116,18 @@
   padding: 10px;
   min-width: 200px;
   position: relative;
+  font-size: 1rem;
+}
+
+.student-group-student-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--background2);
+  padding: 10px;
+  min-width: 200px;
+  position: relative;
+  font-size: 1.5rem;
 }
 
 .student-group ul {

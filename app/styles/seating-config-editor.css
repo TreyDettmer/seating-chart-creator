@@ -41,14 +41,32 @@
   overflow: scroll;
 }
 
+.classroom-student-view {
+  background-color: rgb(3, 145, 170);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow: auto;
+  z-index: 2;
+}
+
 .classroom-floor-grid {
   height: auto;
   background-color: yellowgreen;
-  /* aspect-ratio: 1 / 1; */
   display: grid;
+  gap: 1px;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.classroom-floor-grid-student-view {
+  background-color: yellowgreen;
+  flex: none;
+  margin: auto;
+  width: 1700px;
+  display: grid;
+  z-index: 2;
 }
 

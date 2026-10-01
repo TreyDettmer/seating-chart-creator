@@ -116,11 +116,11 @@ body {
 }
 
 .toggle-button-on {
-  color: green;
+  color: var(--foreground)
 }
 
 .toggle-button-on:hover {
-  color: rgb(0, 197, 0);
+
 }
 
 .toggle-button-off {
@@ -128,7 +128,7 @@ body {
 }
 
 .toggle-button-off:hover {
-  color: rgb(0, 197, 0);
+
 }
 
 .tag-select {

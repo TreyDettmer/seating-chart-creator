@@ -4,12 +4,13 @@ import { v4 as uuid } from 'uuid'
 import { useState } from "react";
 import Modal from "./modal";
 import { useToast } from "./toast-context";
+import Toggle from "./toggle";
 
 
 export default function ClassListComponent(
 
 ) {
-    const { classes } = useAppState();
+    const { classes, studentViewEnabled } = useAppState();
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,6 +32,10 @@ export default function ClassListComponent(
 
     function onCloseClassCreationModal() {
         setIsModalOpen(false)
+    }
+
+    function toggleStudentView(newValue: boolean) {
+        dispatch({ type: 'TOGGLE_STUDENT_VIEW', payload: { newValue: newValue } });
     }
 
     function onCreateClass() {
@@ -60,14 +65,19 @@ export default function ClassListComponent(
     };
 
     return (
-        <div className="class-list">
-            <ul className="flex flex-row">
+        <div className="class-list-container">
+            <ul className="class-list">
                 {Object.values(classes).map(x => {
                     return (
                         <button onClick={() => handleSwitchClass(x.id)} className={`class-list-button ${x.id === activeClass?.id ? "class-list-button-current" : ""}`} key={x.id}>{x.name}</button>
                     )
                 })}
                 <button className={`class-list-button`} onClick={openCloseClassCreationModal}>Add Class</button>
+                <div className={studentViewEnabled ? 'toggle-student-view-container-active' : 'toggle-student-view-container'}>
+                    <p>Toggle Student View</p>
+                    <Toggle isChecked={studentViewEnabled} onChanged={(newValue) => toggleStudentView(newValue)}></Toggle>
+                </div>
+                
             </ul>
             <Modal open={isModalOpen} onClose={onCloseClassCreationModal}>
                 <div className="class-creation-modal">

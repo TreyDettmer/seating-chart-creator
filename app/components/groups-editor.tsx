@@ -16,7 +16,7 @@ import ShufflePreferencesModal from "./shuffle-preferences-modal";
 export default function GroupsEditor() {
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents, groupsConfigurations: allGroupsConfigurations, tags: allTags, shufflePreferences, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups } = useAppState();
+    const { students: allStudents, groupsConfigurations: allGroupsConfigurations, tags: allTags, shufflePreferences, keepApartGroups: allKeepApartGroups, keepTogetherGroups: allKeepTogetherGroups, studentViewEnabled } = useAppState();
     const toast = useToast();
     const [isShufflePreferencesModalOpen, setIsShufflePreferencesModalOpen] = useState(false)
     const [useAllStudents, setUseAllStudents] = useState(true);
@@ -435,7 +435,8 @@ export default function GroupsEditor() {
         setIsShufflePreferencesModalOpen(false);
     }
 
-    function onDeleteGroup(groupId : string) {
+    function onDeleteGroup(groupsConfigId : string) {
+        dispatch({ type: 'REMOVE_GROUPS_CONFIGURATION', payload: { groupsConfigId: groupsConfigId } });
 
     }
 
@@ -494,7 +495,7 @@ export default function GroupsEditor() {
                         <button onClick={() => setIsShufflePreferencesModalOpen(true)} className="default-button">Shuffle Preferences</button>
                         <button onClick={shuffleStudents} className="default-button">Shuffle</button>
                     </div>
-                    <div className="groups-grid">
+                    <div className={ studentViewEnabled ? 'groups-grid-student-view' : 'groups-grid'}>
                         <DragDropProvider
                             onDragStart={() => { }}
                             onDragMove={() => { }}
@@ -502,14 +503,14 @@ export default function GroupsEditor() {
                             onDragEnd={onDragEnd}>
                             {groupsConfiguration.studentGroups.map(x => {
                                 return (
-                                    <div className="student-group" key={x.id}>
+                                    <div className={studentViewEnabled ? 'student-group-student-view' : 'student-group'} key={x.id}>
                                         <div className="student-group-header-container">
                                             <p className="student-group-header">{x.name}</p>
-                                            <button className="student-group-select-button" onClick={(e) => onGroupSelected(e, x.id)}>
+                                            {!studentViewEnabled && <button className="student-group-select-button" onClick={(e) => onGroupSelected(e, x.id)}>
                                                 <FiEdit2></FiEdit2>
-                                            </button>
+                                            </button>}
                                         </div>
-                                        <ul>
+                                        <ul className="w-full">
                                             {x.studentIds.map(y => {
                                                 return (
                                                     <StudentGroupRow key={`slot-${y}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={y} id={`slot-${y}`}></StudentGroupRow>
@@ -517,7 +518,7 @@ export default function GroupsEditor() {
                                             })}
                                             <StudentGroupRow key={`slot-${x.id}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={null} id={`slot-${x.id}`}></StudentGroupRow>
                                         </ul>
-                                        <ul className="group-tag-marker-container">
+                                        {!studentViewEnabled && <ul className="group-tag-marker-container">
                                             {x.tagIds.map((tagId) => {
                                                 return <li
                                                     className="group-tag-marker"
@@ -527,7 +528,7 @@ export default function GroupsEditor() {
                                                     }}
                                                 ></li>
                                             })}
-                                        </ul>
+                                        </ul>}
                                     </div>
 
                                 )

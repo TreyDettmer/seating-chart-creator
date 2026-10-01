@@ -19,7 +19,7 @@ export default function SeatingConfigEditor() {
         seatingConfigurations: allSeatingConfigs,
         keepApartGroups: allKeepApartGroups,
         keepTogetherGroups: allKeepTogetherGroups,
-        tags: allTags, shufflePreferences } = useAppState();
+        tags: allTags, shufflePreferences, studentViewEnabled } = useAppState();
     const [isModalOpen, setIsModalOpen] = useState(false)
     const dispatch = useAppDispatch();
     const activeConfig = useActiveSeatingConfig()
@@ -305,8 +305,8 @@ export default function SeatingConfigEditor() {
                 }
             }
         }
-        var issues : string[] = getIssuesWithShuffle(bestAssignment,adjacencyMap)
-        for (let i = 0; i < issues.length; i ++) {
+        var issues: string[] = getIssuesWithShuffle(bestAssignment, adjacencyMap)
+        for (let i = 0; i < issues.length; i++) {
             toast.open(
                 toast.toastWarning("Shuffle Issue", issues[i])
             )
@@ -424,9 +424,9 @@ export default function SeatingConfigEditor() {
 
     function getIssuesWithShuffle(
         studentToDesk: Map<string, string>,
-        adjacencyMap: Map<string, string[]>) : string[] {
-        
-        var issues : string[] = []
+        adjacencyMap: Map<string, string[]>): string[] {
+
+        var issues: string[] = []
         if (!shufflePreferences.ignoreKeepApartGroups) {
             for (const group of keepApartGroups) {
                 if (group.studentIds.length < 2) {
@@ -496,16 +496,17 @@ export default function SeatingConfigEditor() {
                         onDragMove={() => { }}
                         onDragOver={() => { }}
                         onDragEnd={onDragEnd}>
-                        <div className="classroom">
+                        <div className={studentViewEnabled ? 'classroom-student-view' : 'classroom'}>
                             {activeConfig ? (
 
-                                <div className="classroom-floor-grid"
+                                <div className={studentViewEnabled ? 'classroom-floor-grid-student-view' : 'classroom-floor-grid'}
                                     style={{
                                         gridTemplateColumns: `repeat(${activeConfig.cols}, minmax(0, 1fr))`,
                                         gridTemplateRows: `repeat(${activeConfig.rows}, minmax(0, 1fr))`,
                                         aspectRatio: `${activeConfig.cols} / ${activeConfig.rows}`,
-                                        width: `${Math.min(90, 90 * activeConfig.cols / activeConfig.rows)}%`,
-                                        
+                                        width: studentViewEnabled
+                                            ? `800px`
+                                            : `${Math.min(90, 90 * activeConfig.cols / activeConfig.rows)}%`,
                                     }}
                                 >
                                     {activeConfig.grid.map(row => {
