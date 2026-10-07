@@ -1,3 +1,4 @@
+import { group } from "console";
 import { act, ReactNode } from "react";
 import { components } from 'react-select';
 
@@ -68,6 +69,7 @@ export type AppAction =
   | { type: 'SWAP_STUDENTS_IN_GROUPS'; payload: { groupsId: string; sourceGroupId: string; targetGroupId: string; studentId1: string; studentId2: string | null } }
   | { type: 'UPDATE_TAGS'; payload: { newTags: Record<string, Tag> } }
   | { type: 'TOGGLE_STUDENT_VIEW'; payload: { newValue: boolean } }
+  | { type: 'UPDATE_STUDENT_LIST_DISPLAY_PREFS'; payload: { newPrefs: StudentListDisplayPrefs} }
 
 export const CustomOption = (props: any) => {
   return (
@@ -167,7 +169,9 @@ export enum Gender {
 export interface StudentCsvRow {
   FirstName: string;
   LastName: string;
-  Gender: Gender;
+  Gender?: Gender;
+  IsEsl?: boolean;
+  IepDesc?: string;
 }
 
 export interface KeepApartGroup {
@@ -180,6 +184,18 @@ export interface KeepTogetherGroup {
   id: string,
   studentIds: string[],
   useAnd: boolean
+}
+
+export interface StudentListDisplayPrefs {
+  showGender: boolean;
+  showIsEsl: boolean;
+  showIepDesc: boolean;
+}
+
+export const defaultStudentListDisplayPrefs : StudentListDisplayPrefs = {
+  showGender: false,
+  showIsEsl: false,
+  showIepDesc: false
 }
 
 export interface SchoolClass {
@@ -218,6 +234,7 @@ export interface AppState {
   activeClassId: string | null;
   shufflePreferences: ShufflePreferences;
   studentViewEnabled: boolean;
+  studentListDisplayPrefs: StudentListDisplayPrefs;
 }
 export const initialAppState: AppState = {
   students: {},
@@ -229,7 +246,8 @@ export const initialAppState: AppState = {
   tags: {},
   activeClassId: null,
   shufflePreferences: initialShufflePreferences,
-  studentViewEnabled: false
+  studentViewEnabled: false,
+  studentListDisplayPrefs: defaultStudentListDisplayPrefs
 };
 
 export interface SeatingConfiguration {
@@ -350,7 +368,59 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { classId, studentId } = action.payload;
       const cls = state.classes[classId];
       if (!cls) return state;
-      const { [studentId]: _removed, ...remainingStudents } = state.students;
+
+      const { [studentId]: _removedStudent, ...remainingStudents } = state.students;
+
+      const remainingClassStudents = cls.studentIds.filter((id) => id !== studentId);
+      const updatedGroupsConfigurations = Object.fromEntries(
+        Object.entries(state.groupsConfigurations).map(([groupsConfigId, groupsConfig]) => [
+          groupsConfigId,
+          {
+            ...groupsConfig,
+            studentGroups: groupsConfig.studentGroups.map((group) => ({
+              ...group,
+              studentIds: group.studentIds.filter((id) => id !== studentId),
+            })),
+          },
+        ])
+      );
+
+      const updatedKeepApartGroups = Object.fromEntries(
+        Object.entries(state.keepApartGroups).map(([groupId, group]) => [
+          groupId,
+          {
+            ...group,
+            studentIds: group.studentIds.filter((id) => id !== studentId),
+          },
+        ])
+      );
+
+      const updatedKeepTogetherGroups = Object.fromEntries(
+        Object.entries(state.keepTogetherGroups).map(([groupId, group]) => [
+          groupId,
+          {
+            ...group,
+            studentIds: group.studentIds.filter((id) => id !== studentId),
+          },
+        ])
+      );
+
+      const updatedSeatingConfigurations = Object.fromEntries(
+        Object.entries(state.seatingConfigurations).map(([configId, config]) => [
+          configId,
+          {
+            ...config,
+            grid: config.grid.map((row) =>
+              row.map((cell) =>
+                cell.studentId === studentId
+                  ? { ...cell, studentId: null }
+                  : cell
+              )
+            )
+          },
+        ])
+      );
+
       return {
         ...state,
         students: remainingStudents,
@@ -358,9 +428,15 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ...state.classes,
           [classId]: {
             ...cls,
-            studentIds: cls.studentIds.filter((id) => id !== studentId),
+            studentIds: remainingClassStudents,
+            selectedStudentId:
+              cls.selectedStudentId === studentId ? null : cls.selectedStudentId,
           },
         },
+        seatingConfigurations: updatedSeatingConfigurations,
+        groupsConfigurations: updatedGroupsConfigurations,
+        keepApartGroups: updatedKeepApartGroups,
+        keepTogetherGroups: updatedKeepTogetherGroups,
       };
     }
 
@@ -1013,6 +1089,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         groupsConfigurations: remainingGroupsConfigs
+      }
+    }
+
+    case 'UPDATE_STUDENT_LIST_DISPLAY_PREFS': {
+      const { newPrefs } = action.payload;
+      return {
+        ...state,
+        studentListDisplayPrefs: newPrefs
       }
     }
 

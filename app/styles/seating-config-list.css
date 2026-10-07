@@ -3,6 +3,7 @@
 .seating-config-list {
   display: flex;
   flex-direction: row;
+  height: 100%;
 }
 .seating-config-button {
   background: var(--background);

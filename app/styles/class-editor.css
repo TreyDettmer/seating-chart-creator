@@ -16,12 +16,16 @@
 .class-editor-sidebar {
     width: 500px;
     height: 100%;
+    padding-left: 1rem;
+    border-right: 1px solid var(--tertiary);
 }
 
 .class-editor-sidebar-tabs-container,
 .editors-tabs-container {
   display: flex;
   flex-direction: row;
+  border-bottom: 1px solid var(--tertiary);
+  padding-left: 1rem;
 }
 
 .sidebar-tab {

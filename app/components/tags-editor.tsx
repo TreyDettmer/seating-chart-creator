@@ -137,28 +137,6 @@ export default function TagsEditor() {
         newTags[elementWithNewIndex.id].priority = oldPriority;
         dispatch({ type: 'UPDATE_TAGS', payload: { newTags: newTags } });
 
-
-        // if (!event.operation.target) {
-        //     return;
-        // }
-        
-        // const sourceId = event.operation.source?.id as string;
-        // const targetId = event.operation.target?.id as string;
-
-        // if (sourceId == null || targetId == null) {
-        //     return;
-        // }
-        
-        // if (sourceId == targetId) {
-        //     return
-        // }
-        // console.log('Drag ended')
-        // var oldPriority = tags[sourceId].priority;
-        // var newPriority = tags[targetId].priority;
-        // var newTags = { ...tags };
-        // newTags[sourceId].priority = newPriority;
-        // newTags[targetId].priority = oldPriority;
-        // console.log(`Old: ${oldPriority}, New: ${newPriority}`)
     }
 
     return (

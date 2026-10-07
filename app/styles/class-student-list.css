@@ -4,6 +4,7 @@
   overflow-x: auto;
   overflow-y: auto;
   max-height: 80vh;
+  padding-top: 1rem;
 }
 
 .student-list-table {
@@ -18,8 +19,19 @@
   padding: 5px;
   border: 2px solid var(--foreground);
   font-weight: bold;
-  
 }
+
+.remove-student-button {
+  color: red;
+  cursor: pointer;
+  margin: auto;
+  width: 100%;
+}
+
+.remove-student-button:hover {
+  color: rgb(172, 0, 0);
+}
+
 .student-list-table td {
   background: var(--background);
   color: var(--foreground);
@@ -48,6 +60,14 @@
 
 .new-student-creation-modal {
   padding: 10px;
+}
+
+.import-students-modal {
+  padding: 10px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .new-student-attribute-row {

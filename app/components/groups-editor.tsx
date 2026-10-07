@@ -52,7 +52,7 @@ export default function GroupsEditor() {
                 }
             )
         }
-        var filteredStudents = useAllStudents ? students : students;
+        var filteredStudents = useAllStudents ? students : students.filter(x => x.isPresent == true);
         for (let i = 0; i < filteredStudents.length; i++) {
             studentGroups[i % numberOfGroups].studentIds.push(filteredStudents[i].id);
         }
@@ -191,7 +191,9 @@ export default function GroupsEditor() {
         // the rest start out (and may remain) empty.
         const shuffledGroupIds = [...studentGroups.map(x => x.id)].sort(() => Math.random() - 0.5);
         const studentToGroup: Map<string, string> = new Map();
-        students.forEach((student, i) => {
+        var filteredStudents = useAllStudents ? students : students.filter(x => x.isPresent == true);
+
+        filteredStudents.forEach((student, i) => {
             studentToGroup.set(student.id, shuffledGroupIds[i % shuffledGroupIds.length]);
         });
 
@@ -210,18 +212,13 @@ export default function GroupsEditor() {
             // Exponential cooling schedule
             const t = shufflePreferences.explorationStrengthStart * Math.pow(shufflePreferences.explorationStrengthEnd / shufflePreferences.explorationStrengthStart, iter / shufflePreferences.iterations);
 
-
-
-
             let undoMove;
+            const idxA = Math.floor(Math.random() * filteredStudents.length);
+            let idxB = Math.floor(Math.random() * filteredStudents.length);
+            while (idxB === idxA) idxB = Math.floor(Math.random() * filteredStudents.length);
 
-
-            const idxA = Math.floor(Math.random() * students.length);
-            let idxB = Math.floor(Math.random() * students.length);
-            while (idxB === idxA) idxB = Math.floor(Math.random() * students.length);
-
-            const studentA = students[idxA].id;
-            const studentB = students[idxB].id;
+            const studentA = filteredStudents[idxA].id;
+            const studentB = filteredStudents[idxB].id;
             const groupdId1 = studentToGroup.get(studentA);
             const groupdId2 = studentToGroup.get(studentB);
 

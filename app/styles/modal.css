@@ -23,7 +23,7 @@
 .modal-open {
   background-color: var(--background);
   color: var(--foreground);
-  border: 2px solid black;
+  border: 2px solid var(--tertiary);
   border-radius: 5px;
   box-sizing: content-box;
   z-index: 3;

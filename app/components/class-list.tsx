@@ -77,6 +77,12 @@ export default function ClassListComponent(
                     <p>Toggle Student View</p>
                     <Toggle isChecked={studentViewEnabled} onChanged={(newValue) => toggleStudentView(newValue)}></Toggle>
                 </div>
+                {/* {!studentViewEnabled &&
+                    <button className="default-button" onClick={openCloseClassCreationModal}>Import App State</button>
+                }
+                {!studentViewEnabled &&
+                    <button className="default-button" onClick={openCloseClassCreationModal}>Export App State</button>
+                } */}
                 
             </ul>
             <Modal open={isModalOpen} onClose={onCloseClassCreationModal}>

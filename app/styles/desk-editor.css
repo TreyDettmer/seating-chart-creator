@@ -3,6 +3,7 @@
 .desk-editor {
   /* width: 100%; */
   background-color: var(--background);
+  padding-left: 1rem;
 }
 
 .desk-editor .selectable-option {

@@ -1,13 +1,13 @@
 import "../styles/class-student-list.css";
 import { useActiveClass, useAppDispatch, useAppState, useStudent } from "../app-context";
 import { LocalFile, parse, ParseResult } from 'papaparse'
-import { Gender, Student, StudentCsvRow } from "../app-state";
+import { CustomOption, Gender, Student, StudentCsvRow, StudentListDisplayPrefs } from "../app-state";
 import { useState } from "react";
 import Modal from "./modal";
 import { useToast } from "./toast-context";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import { v4 as uuid } from 'uuid'
-import {FiUserCheck, FiUserX } from 'react-icons/fi'
+import { FiUserCheck, FiUserX } from 'react-icons/fi'
 import Toggle from "./toggle";
 
 
@@ -15,7 +15,7 @@ import Toggle from "./toggle";
 export default function ClassStudentList() {
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
-    const { students: allStudents } = useAppState();
+    const { students: allStudents, studentListDisplayPrefs } = useAppState();
     interface NewStudentInfoType {
         firstName: string;
         lastName: string;
@@ -24,6 +24,8 @@ export default function ClassStudentList() {
         iepDesc: string;
     }
     const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+    const [isTablePrefsModalOpen, setIsTablePrefsModalOpen] = useState(false);
+    const [isImportStudentsModalOpen, setIsImportStudentsModalOpen] = useState(false);
     const [newStudentInfo, setNewStudentInfo] = useState<NewStudentInfoType>({ firstName: "", lastName: "", gender: Gender.Boy, isEsl: false, iepDesc: "" })
     const toast = useToast()
 
@@ -55,15 +57,16 @@ export default function ClassStudentList() {
                         id: `${i}`,
                         firstName: `${rowData.FirstName}`,
                         lastName: `${rowData.LastName}`,
-                        gender: rowData.Gender,
-                        isEsl: false,
-                        iepDesc: "",
+                        gender: rowData.Gender || Gender.Boy,
+                        isEsl: rowData.IsEsl || false,
+                        iepDesc: rowData.IepDesc || "",
                         tagIds: [],
                         nameAbbr: "",
                         isPresent: true
                     }
                     importedStudents[student.id] = student
                 }
+                onCloseImportStudentsModal()
                 if (activeClass !== undefined) {
                     dispatch({ type: 'IMPORT_STUDENTS', payload: { classId: activeClass.id, students: importedStudents } });
                 }
@@ -72,6 +75,26 @@ export default function ClassStudentList() {
 
             }
         })
+    }
+
+    function openImportStudentsModal() {
+        setIsImportStudentsModalOpen(true)
+    }
+
+    function onCloseImportStudentsModal() {
+        setIsImportStudentsModalOpen(false)
+    }
+
+    function openTablePrefsModal() {
+        setIsTablePrefsModalOpen(true);
+    }
+
+    function updateStudentListDisplayPrefs(newPrefs: StudentListDisplayPrefs) {
+        dispatch({ type: 'UPDATE_STUDENT_LIST_DISPLAY_PREFS', payload: { newPrefs: newPrefs } });
+    }
+
+    function onCloseTablePrefsModal() {
+        setIsTablePrefsModalOpen(false);
     }
 
     function openAddStudentModal() {
@@ -125,6 +148,16 @@ export default function ClassStudentList() {
             return
         }
         dispatch({ type: 'UPDATE_STUDENT', payload: { classId: activeClass.id, student: updatedStudent } });
+    }
+
+    function onDeleteStudent(student: Student) {
+        if (activeClass == undefined) {
+            return
+        }
+        if (confirm(`Are you sure you want to remove student '${student.firstName} ${student.lastName}'?`) == true) {
+            dispatch({ type: 'REMOVE_STUDENT', payload: { classId: activeClass.id, studentId: student.id } });
+        }
+
 
     }
 
@@ -137,9 +170,10 @@ export default function ClassStudentList() {
                             <th>Is Present</th>
                             <th>First Name</th>
                             <th>Last Name</th>
-                            <th>Gender</th>
-                            <th>Is ESL?</th>
-                            <th>IEP</th>
+                            {studentListDisplayPrefs.showGender && <th>Gender</th>}
+                            {studentListDisplayPrefs.showIsEsl && <th>Is ESL?</th>}
+                            {studentListDisplayPrefs.showIepDesc && <th>IEP</th>}
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -147,7 +181,7 @@ export default function ClassStudentList() {
                             return (
                                 <tr key={student.id}>
                                     <td>
-                                        <button className={`attendance-toggle-button ${student.isPresent ? 'attendance-toggle-button-on' : 'attendance-toggle-button-off'}`} onClick={() => onStudentUpdated({ ...student, isPresent: !student.isPresent})}>
+                                        <button className={`attendance-toggle-button ${student.isPresent ? 'attendance-toggle-button-on' : 'attendance-toggle-button-off'}`} onClick={() => onStudentUpdated({ ...student, isPresent: !student.isPresent })}>
                                             {student.isPresent && <FiUserCheck size={25}></FiUserCheck>}
                                             {!student.isPresent && <FiUserX size={25}></FiUserX>}
                                         </button>
@@ -158,23 +192,32 @@ export default function ClassStudentList() {
                                     <td>
                                         <input value={student.lastName} onChange={e => onStudentUpdated({ ...student, lastName: e.target.value.trim() })}></input>
                                     </td>
+                                    {studentListDisplayPrefs.showGender &&
+                                        <td>
+                                            <Select value={{ value: student.gender, label: `${student.gender}` }} options={[
+                                                { value: Gender.Boy, label: 'Boy' },
+                                                { value: Gender.Girl, label: 'Girl' },
+                                            ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
+                                                value: Gender;
+                                                label: string;
+                                            }>, actionMeta: ActionMeta<{
+                                                value: Gender;
+                                                label: string;
+                                            }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.Boy }) }} />
+                                        </td>
+                                    }
+                                    {studentListDisplayPrefs.showIsEsl &&
+                                        <td>
+                                            <Toggle isChecked={student.isEsl} onChanged={(newVal: boolean) => onStudentUpdated({ ...student, isEsl: newVal })} ></Toggle>
+                                        </td>
+                                    }
+                                    {studentListDisplayPrefs.showIepDesc &&
+                                        <td>
+                                            <input value={student.iepDesc} onChange={e => onStudentUpdated({ ...student, iepDesc: e.target.value.trim() })}></input>
+                                        </td>
+                                    }
                                     <td>
-                                        <Select value={{ value: student.gender, label: `${student.gender}` }} options={[
-                                            { value: Gender.Boy, label: 'Boy' },
-                                            { value: Gender.Girl, label: 'Girl' },
-                                        ]} onChange={(newValue: SingleValue<{
-                                            value: Gender;
-                                            label: string;
-                                        }>, actionMeta: ActionMeta<{
-                                            value: Gender;
-                                            label: string;
-                                        }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.Boy }) }} />
-                                    </td>
-                                    <td>
-                                        <Toggle isChecked={student.isEsl} onChanged={(newVal : boolean) => onStudentUpdated({ ...student, isEsl: newVal })} ></Toggle>
-                                    </td>
-                                    <td>
-                                        <input value={student.iepDesc} onChange={e => onStudentUpdated({ ...student, iepDesc: e.target.value.trim() })}></input>
+                                        <button className="remove-student-button" onClick={() => onDeleteStudent(student)}>X</button>
                                     </td>
                                 </tr>
                             )
@@ -184,10 +227,8 @@ export default function ClassStudentList() {
             </div>
             <div className="student-list-actions-container">
                 <button className="default-button" onClick={openAddStudentModal}>Add Student</button>
-                <label htmlFor="importStudentsUpload" className="default-button">
-                    <input className="hidden" id="importStudentsUpload" type="file" onChange={onImportStudentsFileUploaded} />
-                    Import Students
-                </label>
+                <button className="default-button" onClick={openImportStudentsModal}>Import Students</button>
+                <button className="default-button" onClick={openTablePrefsModal}>Table Preferences</button>
             </div>
             <Modal open={isAddStudentModalOpen} onClose={onCloseAddStudentModal}>
                 <div className="new-student-creation-modal">
@@ -197,18 +238,18 @@ export default function ClassStudentList() {
                     <div>
                         <div className="new-student-attribute-row">
                             <p>First Name</p>
-                            <input value={newStudentInfo.firstName} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, firstName: e.target.value.trim() })} />
+                            <input className="modal-text-input" value={newStudentInfo.firstName} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, firstName: e.target.value.trim() })} />
                         </div>
                         <div className="new-student-attribute-row">
                             <p>Last Name</p>
-                            <input value={newStudentInfo.lastName} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, lastName: e.target.value.trim() })} />
+                            <input className="modal-text-input" value={newStudentInfo.lastName} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, lastName: e.target.value.trim() })} />
                         </div>
                         <div className="new-student-attribute-row">
                             <p>Gender</p>
                             <Select value={{ value: newStudentInfo.gender, label: `${newStudentInfo.gender}` }} options={[
                                 { value: Gender.Boy, label: 'Boy' },
                                 { value: Gender.Girl, label: 'Girl' },
-                            ]} onChange={(newValue: SingleValue<{
+                            ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
                                 value: Gender;
                                 label: string;
                             }>, actionMeta: ActionMeta<{
@@ -218,16 +259,59 @@ export default function ClassStudentList() {
                         </div>
                         <div className="new-student-attribute-row">
                             <p>Is ESL</p>
-                            <input type="checkbox" checked={newStudentInfo.isEsl} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, isEsl: e.target.checked })} />
+                            <Toggle isChecked={newStudentInfo.isEsl} onChanged={(newValue) => { setNewStudentInfo({ ...newStudentInfo, isEsl: newValue }) }}></Toggle>
                         </div>
                         <div className="new-student-attribute-row">
                             <p>IEP Description</p>
-                            <input value={newStudentInfo.iepDesc} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, iepDesc: e.target.value.trim() })} />
+                            <input className="modal-text-input" value={newStudentInfo.iepDesc} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, iepDesc: e.target.value.trim() })} />
                         </div>
                     </div>
                     <div className="flex flex-row justify-center">
                         <button onClick={onCloseAddStudentModal} className="default-button">Cancel</button>
                         <button onClick={onAddStudent} className="default-button">Add Student</button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal open={isTablePrefsModalOpen} onClose={onCloseTablePrefsModal}>
+                <div className="new-student-creation-modal">
+                    <div className="flex flex-row justify-center">
+                        <p className="title">Table Preferences</p>
+                    </div>
+                    <div>
+                        <div className="new-student-attribute-row">
+                            <p>Show Gender</p>
+                            <Toggle isChecked={studentListDisplayPrefs.showGender} onChanged={(newValue) => { updateStudentListDisplayPrefs({ ...studentListDisplayPrefs, showGender: newValue }) }}></Toggle>
+                        </div>
+                        <div className="new-student-attribute-row">
+                            <p>Show Is ESL</p>
+                            <Toggle isChecked={studentListDisplayPrefs.showIsEsl} onChanged={(newValue) => { updateStudentListDisplayPrefs({ ...studentListDisplayPrefs, showIsEsl: newValue }) }}></Toggle>
+                        </div>
+                        <div className="new-student-attribute-row">
+                            <p>Show IEP</p>
+                            <Toggle isChecked={studentListDisplayPrefs.showIepDesc} onChanged={(newValue) => { updateStudentListDisplayPrefs({ ...studentListDisplayPrefs, showIepDesc: newValue }) }}></Toggle>
+                        </div>
+                    </div>
+                    <div className="flex flex-row justify-center">
+                        <button onClick={onCloseTablePrefsModal} className="default-button">Close</button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal open={isImportStudentsModalOpen} onClose={onCloseImportStudentsModal}>
+                <div className="import-students-modal">
+                    <div className="flex flex-row justify-center">
+                        <p className="title">Import Students</p>
+                    </div>
+                    <div>
+                        <p>Upload a CSV file containing FirstName, LastName columns and optional Gender, IsEsl, and IepDesc columns</p>
+                    </div>
+                    <label htmlFor="importStudentsUpload" className="default-button">
+                        <input className="hidden" id="importStudentsUpload" type="file" onChange={onImportStudentsFileUploaded} />
+                        Import Students
+                    </label>
+                    <div className="flex flex-row justify-center">
+                        <button onClick={onCloseImportStudentsModal} className="default-button">Close</button>
                     </div>
                 </div>
             </Modal>

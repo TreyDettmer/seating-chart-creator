@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: row;
   height: 5vh;
+  border-bottom: 1px solid var(--tertiary);
 }
 .class-list {
   display: flex;
@@ -20,6 +21,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
 }
 
 .class-list-button-current {
