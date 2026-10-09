@@ -347,6 +347,51 @@ export default function SeatingConfigList(
         return
     }
 
+    function onDuplicateConfig() {
+        if (activeClass == undefined) {
+            return
+        }
+        if (selectedConfigId == "") {
+            return
+        }
+
+        if (seatingConfigs.length >= 4) {
+            toast.open(
+                toast.toastError("Error", "Config limit reached.")
+            )
+            return
+        }
+        var currentConfig = allSeatingConfigs[selectedConfigId];
+        var grid: FloorCell[][] = currentConfig.grid.map(row => row.map(cell => ({ ...cell })));
+        var newConfigName = `${currentConfig.name}-Copy`;
+
+
+        if (seatingConfigs.some(x => x.name.toLowerCase().trim() == configCreationInfo.name.toLowerCase().trim())) {
+            toast.open(
+                toast.toastError("Error", "Duplicate config name.")
+            )
+            return
+        }
+
+        var newConfigId = uuid();
+        var newConfig: SeatingConfiguration = {
+            id: newConfigId,
+            classId: activeClass.id,
+            name: newConfigName,
+            rows: currentConfig.rows,
+            cols: currentConfig.cols,
+            grid: grid,
+            selectedCell: null,
+            createdAt: Date.toString(),
+            updatedAt: Date.toString()
+        }
+        dispatch({ type: 'ADD_SEATING_CONFIG', payload: { classId: activeClass.id, config: newConfig } });
+        setConfigCreationInfo(defaultConfigCreationInfo);
+        setIsCreationModalOpen(false);
+        onCloseConfigUpdateModal()
+        dispatch({ type: 'SET_ACTIVE_CONFIG', payload: { classId: activeClass.id, configId: newConfigId } });
+    }
+
     function onUpdateConfig(newName: string) {
         var name = newName.trim()
         dispatch({ type: 'UPDATE_SEATING_CONFIG', payload: { configId: selectedConfigId, newConfig: { ...allSeatingConfigs[selectedConfigId], name: name, updatedAt: Date.toString() } } });
@@ -390,7 +435,7 @@ export default function SeatingConfigList(
                     return (
                         <div className={`seating-config-button ${x.id === activeConfigurationId ? "seating-config-button-current" : ""}`} onClick={() => onConfigurationClicked(x.id)} key={x.id}>
 
-                            <div>
+                            <div className="flex flex-col justify-center">
                                 {x.name}
                             </div>
                             <button onClick={(e) => openConfigUpdateModal(e, x.id)} className="seating-config-button-option-button">
@@ -412,6 +457,7 @@ export default function SeatingConfigList(
                     </div>
                     <div className="flex flex-row justify-center">
                         <button onClick={onCloseConfigUpdateModal} className="default-button">Close</button>
+                        <button onClick={onDuplicateConfig} className="default-button">Duplicate</button>
                         <button onClick={onDeleteConfig} className="default-button destructive">Delete</button>
                     </div>
                 </div>

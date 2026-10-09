@@ -1,12 +1,12 @@
-import { group } from "console";
-import { act, ReactNode } from "react";
 import { components } from 'react-select';
 
 
 export type AppAction =
   | { type: 'LOAD_STATE'; payload: AppState }
   | { type: 'ADD_CLASS'; payload: { id: string; name: string } }
-  | { type: 'SET_ACTIVE_CLASS'; payload: { classId: string } }
+  | { type: 'SET_ACTIVE_CLASS'; payload: { classId: string | null } }
+  | { type: 'EDIT_CLASS'; payload: { newClass : SchoolClass } }
+  | { type: 'REMOVE_CLASS'; payload: { classId : string } }
   | { type: 'ADD_STUDENT'; payload: { classId: string; student: Student } }
   | { type: 'UPDATE_STUDENT'; payload: { classId: string; student: Student } }
   | { type: 'IMPORT_STUDENTS'; payload: { classId: string; students: Record<string, Student> } }
@@ -70,6 +70,7 @@ export type AppAction =
   | { type: 'UPDATE_TAGS'; payload: { newTags: Record<string, Tag> } }
   | { type: 'TOGGLE_STUDENT_VIEW'; payload: { newValue: boolean } }
   | { type: 'UPDATE_STUDENT_LIST_DISPLAY_PREFS'; payload: { newPrefs: StudentListDisplayPrefs} }
+  | { type: 'UPDATE_CLASS_PREFS'; payload: { classId: string, newPrefs: ClassPreferences} }
 
 export const CustomOption = (props: any) => {
   return (
@@ -118,6 +119,23 @@ export interface ShufflePreferences {
   tagsInfluence: number;
 }
 
+export enum NameDisplay {
+  FirstAndLast = "FirstAndLast",
+  First = "First",
+  Last = "Last",
+  Abbreviated = "Abbreviated",
+}
+
+export interface ClassPreferences {
+  floorColor: string;
+  nameDisplay: NameDisplay
+}
+
+export const initialClassPreferences: ClassPreferences = {
+  floorColor: "blue",
+  nameDisplay: NameDisplay.First
+}
+
 export const initialShufflePreferences: ShufflePreferences = {
   iterations: 8000,
   explorationStrengthStart: 10.0,
@@ -163,7 +181,7 @@ export interface Student {
 export enum Gender {
   Boy = "Boy",
   Girl = "Girl",
-  Other = "Other"
+  None = "None"
 }
 
 export interface StudentCsvRow {
@@ -208,6 +226,7 @@ export interface SchoolClass {
   selectedStudentId: string | null;
   keepApartGroupIds: string[];
   keepTogetherGroupIds: string[];
+  classPreferences: ClassPreferences
 }
 
 export interface Tag {
@@ -309,7 +328,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             activeGroupsConfigurationId: null,
             selectedStudentId: null,
             keepApartGroupIds: [],
-            keepTogetherGroupIds: []
+            keepTogetherGroupIds: [],
+            classPreferences: initialClassPreferences
           },
         },
         activeClassId: state.activeClassId ?? id,
@@ -323,9 +343,27 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { classId, student } = action.payload;
       const cls = state.classes[classId];
       if (!cls) return state;
+
+
+      const updatedStudents = {...state.students}
+      // Get the current students in this class from the broader dictionary of students
+      const studentsInThisClass = Object.fromEntries(
+        Object.entries(updatedStudents).filter(([id]) => cls.studentIds.includes(id))
+      );
+      // Remove the old version of each student in this class from the broader dictionary of students
+      cls.studentIds.forEach(id => delete updatedStudents[id]);
+
+      // add the new student to this class
+      studentsInThisClass[student.id] = student;
+      
+      // Re-abreviate the student names in the class the student was removed from
+      const updatedStudentsInClassWithAbbreviatedNames = populateAbbrNames(studentsInThisClass)
+
+      
+
       return {
         ...state,
-        students: { ...state.students, [student.id]: student },
+        students: { ...updatedStudents, ...updatedStudentsInClassWithAbbreviatedNames },
         classes: {
           ...state.classes,
           [classId]: { ...cls, studentIds: [...cls.studentIds, student.id] },
@@ -337,11 +375,23 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const { classId, student } = action.payload;
       const cls = state.classes[classId];
       if (!cls) return state;
-      var updatedStudents = state.students
+      var updatedStudents = {...state.students}
       updatedStudents[student.id] = student
+
+      // Get the current students in this class from the broader dictionary of students
+      const studentsInThisClass = Object.fromEntries(
+        Object.entries(updatedStudents).filter(([id]) => cls.studentIds.includes(id))
+      );
+      // Remove the old version of each student in this class from the broader dictionary of students
+      cls.studentIds.forEach(id => delete updatedStudents[id]);
+
+      // Re-abreviate the student names in the class the student was removed from
+      const updatedStudentsInClassWithAbbreviatedNames = populateAbbrNames(studentsInThisClass)
+
+
       return {
         ...state,
-        students: updatedStudents,
+        students: { ...updatedStudents, ...updatedStudentsInClassWithAbbreviatedNames },
       };
     }
 
@@ -351,16 +401,80 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       if (!cls) return state;
 
       // Abbreviate student names
-      //const studentsWithAbbreviatedNames = populateAbbrNames(students)
+      const studentsWithAbbreviatedNames = populateAbbrNames(students)
 
+      // Clear Existing students
+      const existingClassStudentIds = cls.studentIds;
+
+      const updatedGroupsConfigurations = Object.fromEntries(
+        Object.entries(state.groupsConfigurations).map(([groupsConfigId, groupsConfig]) => [
+          groupsConfigId,
+          {
+            ...groupsConfig,
+            studentGroups: groupsConfig.studentGroups.map((group) => ({
+              ...group,
+              studentIds: group.studentIds.filter((id) => !existingClassStudentIds.includes(id)),
+            })),
+          },
+        ])
+      );
+
+      const updatedKeepApartGroups = Object.fromEntries(
+        Object.entries(state.keepApartGroups).map(([groupId, group]) => [
+          groupId,
+          {
+            ...group,
+            studentIds: group.studentIds.filter((id) => !existingClassStudentIds.includes(id)),
+          },
+        ])
+      );
+
+      const updatedKeepTogetherGroups = Object.fromEntries(
+        Object.entries(state.keepTogetherGroups).map(([groupId, group]) => [
+          groupId,
+          {
+            ...group,
+            studentIds: group.studentIds.filter((id) => !existingClassStudentIds.includes(id)),
+          },
+        ])
+      );
+
+      const updatedSeatingConfigurations = Object.fromEntries(
+        Object.entries(state.seatingConfigurations).map(([configId, config]) => [
+          configId,
+          {
+            ...config,
+            grid: config.grid.map((row) =>
+              row.map((cell) =>
+              {
+                if (cell.studentId !== null && existingClassStudentIds.includes(cell.studentId)) {
+                  return { ...cell, studentId: null }
+                }
+                return cell
+              }
+              )
+            )
+          },
+        ])
+      );
+
+      const newStateStudents = {...state.students}
+      existingClassStudentIds.forEach(id => delete newStateStudents[id]);
 
       return {
         ...state,
-        students: { ...state.students, ...students },
+        students: { ...newStateStudents, ...studentsWithAbbreviatedNames },
         classes: {
           ...state.classes,
-          [classId]: { ...cls, studentIds: Object.keys(students) },
+          [classId]: { 
+            ...cls, studentIds: Object.keys(studentsWithAbbreviatedNames) ,
+            selectedStudentId: (cls.selectedStudentId !== null && existingClassStudentIds.includes(cls.selectedStudentId)) ? null : cls.selectedStudentId
+          },
         },
+        seatingConfigurations: updatedSeatingConfigurations,
+        groupsConfigurations: updatedGroupsConfigurations,
+        keepApartGroups: updatedKeepApartGroups,
+        keepTogetherGroups: updatedKeepTogetherGroups,
       };
     }
 
@@ -371,7 +485,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
       const { [studentId]: _removedStudent, ...remainingStudents } = state.students;
 
-      const remainingClassStudents = cls.studentIds.filter((id) => id !== studentId);
+      const remainingClassStudentIds = cls.studentIds.filter((id) => id !== studentId);
       const updatedGroupsConfigurations = Object.fromEntries(
         Object.entries(state.groupsConfigurations).map(([groupsConfigId, groupsConfig]) => [
           groupsConfigId,
@@ -421,14 +535,25 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ])
       );
 
+      // Get the remaining students in this class from the broader dictionary of students
+      const remainingStudentsInClass = Object.fromEntries(
+        Object.entries(state.students).filter(([id]) => remainingClassStudentIds.includes(id))
+      );
+      // Remove the old version of each student in this class from the broader dictionary of students
+      remainingClassStudentIds.forEach(id => delete remainingStudents[id]);
+      
+      // Re-abreviate the student names in the class the student was removed from
+      const remainingStudentsInClassWithAbbreviatedNames = populateAbbrNames(remainingStudentsInClass)
+      
+
       return {
         ...state,
-        students: remainingStudents,
+        students: {...remainingStudents, ...remainingStudentsInClassWithAbbreviatedNames},
         classes: {
           ...state.classes,
           [classId]: {
             ...cls,
-            studentIds: remainingClassStudents,
+            studentIds: remainingClassStudentIds,
             selectedStudentId:
               cls.selectedStudentId === studentId ? null : cls.selectedStudentId,
           },
@@ -1098,6 +1223,91 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         studentListDisplayPrefs: newPrefs
       }
+    }
+
+    case 'UPDATE_CLASS_PREFS': {
+      const { classId, newPrefs} = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+      return {
+        ...state,
+        classes: {
+          ...state.classes,
+          [classId]: {
+            ...cls,
+            classPreferences: newPrefs
+          }
+        },
+      }
+    }
+
+    case 'EDIT_CLASS': {
+      const { newClass } = action.payload;
+      return {
+        ...state,
+        classes: {
+          ...state.classes,
+          [newClass.id]: newClass
+        },
+      }
+    }
+
+    case 'REMOVE_CLASS': {
+      const { classId } = action.payload;
+      const cls = state.classes[classId];
+      if (!cls) return state;
+
+      // Remove this class's students from the global students dictionary
+      const remainingStudents = {...state.students}
+      cls.studentIds.forEach(id => delete remainingStudents[id]);
+
+      const updatedGroupsConfigurations = Object.fromEntries(
+        Object.entries(state.groupsConfigurations).map(([groupsConfigId, groupsConfig]) => [
+          groupsConfigId,
+          {
+            ...groupsConfig,
+            studentGroups: groupsConfig.studentGroups.map((group) => ({
+              ...group,
+              studentIds: group.studentIds.filter((id) => !cls.studentIds.includes(id)),
+            })),
+          },
+        ])
+      );
+
+      const updatedKeepApartGroups = Object.fromEntries(
+        Object.entries(state.keepApartGroups).map(([groupId, group]) => [
+          groupId,
+          {
+            ...group,
+            studentIds: group.studentIds.filter((id) => !cls.studentIds.includes(id)),
+          },
+        ])
+      );
+
+      const updatedKeepTogetherGroups = Object.fromEntries(
+        Object.entries(state.keepTogetherGroups).map(([groupId, group]) => [
+          groupId,
+          {
+            ...group,
+            studentIds: group.studentIds.filter((id) => !cls.studentIds.includes(id)),
+          },
+        ])
+      );
+      
+      const remainingSeatingConfigurations = {...state.seatingConfigurations}
+      cls.seatingConfigurationIds.forEach(id => delete remainingSeatingConfigurations[id]);
+      
+      const { [classId]: _removedClass, ...remainingClasses } = state.classes; 
+
+      return {
+        ...state,
+        students: remainingStudents,
+        classes: remainingClasses,
+        seatingConfigurations: remainingSeatingConfigurations,
+        groupsConfigurations: updatedGroupsConfigurations,
+        keepApartGroups: updatedKeepApartGroups,
+        keepTogetherGroups: updatedKeepTogetherGroups,
+      };
     }
 
     default:

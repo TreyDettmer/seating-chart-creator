@@ -91,13 +91,6 @@ export default function GroupsEditor() {
 
     }
 
-    function updateGroup(updatedGroup: StudentGroup) {
-        if (activeClass == undefined) {
-            return;
-        }
-        dispatch({ type: 'SET_ACTIVE_GROUPS_CONFIGURATION', payload: { classId: activeClass.id, groupsId: null } });
-    }
-
     function onDragEnd(event: DragEndEvent) {
         if (event.canceled) {
             return;
@@ -162,6 +155,45 @@ export default function GroupsEditor() {
             return;
         }
         dispatch({ type: 'SET_ACTIVE_GROUP', payload: { groupsConfigId: groupsConfiguration.id, selectedGroupId: null } });
+    }
+
+    function onAddMissingStudents() {
+        if (activeClass == undefined) {
+            return
+        }
+        if (groupsConfiguration == undefined) {
+            return
+        }
+        
+        const classStudentIds = activeClass.studentIds;
+        var displayedStudentIds : string[] = []
+        groupsConfiguration.studentGroups.forEach(g => g.studentIds.forEach(id => displayedStudentIds.push(id)))
+        
+        var missingStudentIds : string[] = classStudentIds.filter(x => !displayedStudentIds.includes(x));
+
+        var newStudentGroups = [...groupsConfiguration.studentGroups]
+        var i = 0;
+        while (missingStudentIds.length > 0) {
+            var studentId = missingStudentIds.pop()!
+            newStudentGroups[i % newStudentGroups.length].studentIds.push(studentId)
+            i++;
+        }
+        dispatch({ type: 'EDIT_GROUPS_CONFIGURATION', payload: { updatedGroupsConfiguration: {...groupsConfiguration, studentGroups: newStudentGroups, selectedGroupId: null} } });
+    }
+
+    const areStudentsMissing = () : boolean => {
+        if (activeClass == undefined) {
+            return false
+        }
+        if (groupsConfiguration == undefined) {
+            return false
+        }
+        
+        const classStudentIds = activeClass.studentIds;
+        var displayedStudentIds : string[] = []
+        groupsConfiguration.studentGroups.forEach(g => g.studentIds.forEach(id => displayedStudentIds.push(id)))
+        
+        return classStudentIds.filter(x => !displayedStudentIds.includes(x)).length > 0;
     }
 
     function shuffleStudents() {
@@ -432,9 +464,10 @@ export default function GroupsEditor() {
         setIsShufflePreferencesModalOpen(false);
     }
 
-    function onDeleteGroup(groupsConfigId : string) {
-        dispatch({ type: 'REMOVE_GROUPS_CONFIGURATION', payload: { groupsConfigId: groupsConfigId } });
-
+    function onDeleteGroup(groupsConfigId : string, groupsConfigName : string) {
+        if (confirm(`Are you sure you want to remove group configuration '${groupsConfigName}'?`) == true) {
+            dispatch({ type: 'REMOVE_GROUPS_CONFIGURATION', payload: { groupsConfigId: groupsConfigId } });
+        }
     }
 
 
@@ -475,7 +508,7 @@ export default function GroupsEditor() {
                             return (
                                 <li className="existing-groups-row" key={x.id}>
                                     <button className="existing-group-button" onClick={() => onExistingGroupsConfigurationSelected(x.id)}>{x.name}</button>
-                                    <button className="existing-group-remove-button" onClick={() => onDeleteGroup(x.id)}>X</button>
+                                    <button className="existing-group-remove-button" onClick={() => onDeleteGroup(x.id, x.name)}>X</button>
                                 </li>
                             )
                         })}
@@ -491,6 +524,7 @@ export default function GroupsEditor() {
                         <button onClick={onClearActiveGroupsConfigurationId} className="default-button">Back</button>
                         <button onClick={() => setIsShufflePreferencesModalOpen(true)} className="default-button">Shuffle Preferences</button>
                         <button onClick={shuffleStudents} className="default-button">Shuffle</button>
+                        {areStudentsMissing() && <button onClick={onAddMissingStudents} className="default-button">Add Missing Student(s)</button>}
                     </div>
                     <div className={ studentViewEnabled ? 'groups-grid-student-view' : 'groups-grid'}>
                         <DragDropProvider

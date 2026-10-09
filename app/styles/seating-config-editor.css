@@ -16,8 +16,8 @@
 
 .config-editor-actions-panel {
   /* height: 150px; */
-  /* background-color: var(--background); */
-  color: var(--foreground);
+  /* background-color: var(--color1); */
+  color: var(--black);
 }
 
 .config-list-container {
@@ -33,7 +33,7 @@
 }
 
 .classroom {
-  background-color: var(--background);
+  background-color: var(--color1);
   position: relative;
   width: 700px;
   height: 700px;
@@ -42,7 +42,7 @@
 }
 
 .classroom-student-view {
-  background-color: var(--background);
+  background-color: var(--color1);
   position: fixed;
   inset: 0;
   display: flex;
@@ -70,3 +70,11 @@
   z-index: 2;
 }
 
+.class-prefs-modal {
+  padding: 10px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}

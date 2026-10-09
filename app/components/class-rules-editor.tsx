@@ -154,7 +154,7 @@ export default function ClassRulesEditor() {
         <div className="class-rules-editor">
 
             <p className="class-rules-editor-header" >Keep Apart Rules</p>
-            <p className="class-rules-editor-subheader" >Easily keep students away from each other.</p>
+            <p className="class-rules-editor-subheader" >Keep students away from each other.</p>
             <ul>
                 {keepApartGroups.map(x => {
                     return <li className="class-rules-group-container" key={x.id}>
@@ -233,7 +233,7 @@ export default function ClassRulesEditor() {
                 <button className="default-button" onClick={() => onAddKeepTogetherGroup()}>+ Keep Together Rule</button>
             </ul>
             <p className="class-rules-editor-header">Tag Rules</p>
-            <p className="class-rules-editor-subheader">Restrict students to desks and groups with a certain tag.</p>
+            <p className="class-rules-editor-subheader">Restrict students to desks and groups with a certain tag</p>
             <ul>
                 <div className="tag-students-header">
                     <p className="flex-1 text-center">Tag</p>

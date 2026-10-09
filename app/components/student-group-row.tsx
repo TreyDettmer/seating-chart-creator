@@ -1,7 +1,8 @@
 import "../styles/groups-editor.css";
 import { useDraggable, useDroppable } from "@dnd-kit/react"
-import { useAppState } from "../app-context";
+import { useActiveClass, useAppState } from "../app-context";
 import { v4 as uuid } from 'uuid'
+import { NameDisplay } from "../app-state";
 
 
 interface StudentGroupRowProps {
@@ -44,9 +45,28 @@ export function StudentGroupRowEntry(
 ) {
     const { ref, isDragging } = useDraggable({ id: `student-${studentId}` })
     const { students: allStudents, groupsConfigurations: allGroupsConfigurations } = useAppState();
+    const activeClass = useActiveClass();
+    const displayName = () : string => {
+        if (activeClass == undefined) {
+            return ""
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.Abbreviated) {
+            return allStudents[studentId].nameAbbr
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.First) {
+            return allStudents[studentId].firstName
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.Last) {
+            return allStudents[studentId].lastName
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.FirstAndLast) {
+            return `${allStudents[studentId].firstName} ${allStudents[studentId].lastName}`
+        }
+        return ""
+    }
     return (
         <div ref={ref} className="student-group-row-entry">
-            {allStudents[studentId].firstName}
+            {displayName()}
         </div>
     )
 }

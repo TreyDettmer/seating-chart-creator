@@ -1,7 +1,7 @@
 import "../styles/seating-config-editor.css";
 import "../styles/modal.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { FloorCell, KeepApartGroup, KeepTogetherGroup, SeatingConfiguration, ShufflePreferences, ShuffleResult, Student, TagWithStudents } from "../app-state";
+import { ClassPreferences, CustomOption, FloorCell, KeepApartGroup, KeepTogetherGroup, NameDisplay, SeatingConfiguration, ShufflePreferences, ShuffleResult, Student, TagWithStudents } from "../app-state";
 
 import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";
@@ -11,6 +11,7 @@ import { useToast } from "./toast-context";
 import Modal from "./modal";
 import { useState } from "react";
 import ShufflePreferencesModal from "./shuffle-preferences-modal";
+import Select, { ActionMeta, SingleValue } from "react-select";
 
 export default function SeatingConfigEditor() {
     const activeClass = useActiveClass();
@@ -20,7 +21,8 @@ export default function SeatingConfigEditor() {
         keepApartGroups: allKeepApartGroups,
         keepTogetherGroups: allKeepTogetherGroups,
         tags: allTags, shufflePreferences, studentViewEnabled } = useAppState();
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isClassPrefsModalOpen, setIsClassPrefsModalOpen] = useState(false);
     const dispatch = useAppDispatch();
     const activeConfig = useActiveSeatingConfig()
 
@@ -475,12 +477,90 @@ export default function SeatingConfigEditor() {
         return [leftCell, rightCell, upperCell, lowerCell, upperLeftCell, upperRightCell, lowerLeftCell, lowerRightCell]
     }
 
+    function openClassPrefsModal() {
+        setIsClassPrefsModalOpen(true);
+    }
+
+    function updateClassPreferences(newPreferences : ClassPreferences) {
+        if (activeClass == undefined) {
+            return
+        }
+        dispatch({ type: 'UPDATE_CLASS_PREFS', payload: { classId: activeClass.id, newPrefs: newPreferences } });
+    }
+
+    function onCloseClassPrefsModal() {
+        setIsClassPrefsModalOpen(false);
+    }
+
     function openShufflePreferencesModal() {
         setIsModalOpen(true);
     }
 
     function onCloseShufflePreferencesModal() {
         setIsModalOpen(false);
+    }
+
+    function onAddMissingStudents() {
+        if (activeClass == undefined) {
+            return
+        }
+        if (activeConfig == undefined) {
+            return
+        }
+        const classStudentIds = activeClass.studentIds;
+        var displayedStudentIds : string[] = []
+        activeConfig.grid.map(row => {
+            row.map(col => {
+                if (col.studentId != null) {
+                    displayedStudentIds.push(col.studentId)
+                }
+            })
+        })
+        var missingStudentIds : string[] = classStudentIds.filter(x => !displayedStudentIds.includes(x));
+        var grid: FloorCell[][] = activeConfig.grid.map(row => row.map(cell => ({ ...cell })));
+        for (let i = 0; i < activeConfig.rows; i++) {
+            for (let j = 0; j < activeConfig.cols; j++) {
+                if (grid[i][j].allowsStudents && grid[i][j].studentId == null) {
+                    if (missingStudentIds.length > 0) {
+                        grid[i][j].studentId = missingStudentIds.pop()!
+                    }
+                    if (missingStudentIds.length == 0) {
+                        break;
+                    }
+                }
+            }
+            if (missingStudentIds.length == 0) {
+                break;
+            }
+        }
+        if (missingStudentIds.length > 0) {
+            toast.open(
+                toast.toastWarning("Warning", "Not enough spaces for missing students.")
+            )
+            return
+        }
+        dispatch({ type: 'UPDATE_SEATING_CONFIG', payload: { configId: activeConfig.id, newConfig: { ...activeConfig, grid: grid } } });
+
+
+    }
+
+    const areStudentsMissing = () : boolean => {
+        if (activeClass == undefined) {
+            return false
+        }
+        if (activeConfig == undefined) {
+            return false
+        }
+        const classStudentIds = activeClass.studentIds;
+        var displayedStudentIds : string[] = []
+        activeConfig.grid.map(row => {
+            row.map(col => {
+                if (col.studentId != null) {
+                    displayedStudentIds.push(col.studentId)
+                }
+            })
+        })
+        return classStudentIds.filter(x => !displayedStudentIds.includes(x)).length > 0;
     }
 
     return (
@@ -498,7 +578,6 @@ export default function SeatingConfigEditor() {
                         onDragEnd={onDragEnd}>
                         <div className={studentViewEnabled ? 'classroom-student-view' : 'classroom'}>
                             {activeConfig ? (
-
                                 <div className={studentViewEnabled ? 'classroom-floor-grid-student-view' : 'classroom-floor-grid'}
                                     style={{
                                         gridTemplateColumns: `repeat(${activeConfig.cols}, minmax(0, 1fr))`,
@@ -507,6 +586,7 @@ export default function SeatingConfigEditor() {
                                         width: studentViewEnabled
                                             ? `800px`
                                             : `${Math.min(90, 90 * activeConfig.cols / activeConfig.rows)}%`,
+                                        backgroundColor: `${activeClass.classPreferences.floorColor}`
                                     }}
                                 >
                                     {activeConfig.grid.map(row => {
@@ -514,15 +594,50 @@ export default function SeatingConfigEditor() {
                                             return <FloorCellComponent key={cell.id} {...cell}></FloorCellComponent>
                                         })
                                     })}
-                                </div>) : (null)}
+                                </div>
+                            ) : (null)}
                         </div>
                     </DragDropProvider>
                     <div className="config-editor-actions-panel">
                         <button onClick={openShufflePreferencesModal} className="default-button">Shuffle Preferences</button>
                         <button onClick={onShuffleStudents} className="default-button">Shuffle Students</button>
                         <button onClick={onAddDesk} className="default-button">Add Desk</button>
+                        {areStudentsMissing() && <button onClick={onAddMissingStudents} className="default-button">Add Missing Student(s)</button>}
+                        <button onClick={openClassPrefsModal} className="default-button">Classroom Preferences</button>
                     </div>
                     <ShufflePreferencesModal open={isModalOpen} onClose={onCloseShufflePreferencesModal}></ShufflePreferencesModal>
+                    <Modal open={isClassPrefsModalOpen} onClose={onCloseClassPrefsModal}>
+                        <div className="class-prefs-modal">
+                            <div className="flex flex-row justify-center">
+                                <p className="title">Classroom Preferences</p>
+                            </div>
+                            <div>
+                                <div className="new-student-attribute-row">
+                                    <p>Floor Color</p>
+                                    <input type="color" value={activeClass.classPreferences.floorColor} onChange={(e) => updateClassPreferences({...activeClass.classPreferences, floorColor: e.target.value})}></input>
+                                </div>
+                                <div className="new-student-attribute-row">
+                                    <p>Student Names</p>
+                                    <Select value={{ value: activeClass.classPreferences.nameDisplay, label: `${activeClass.classPreferences.nameDisplay}` }} options={[
+                                { value: NameDisplay.First, label: 'First' },
+                                { value: NameDisplay.FirstAndLast, label: 'First And Last' },
+                                { value: NameDisplay.Last, label: 'Last' },
+                                { value: NameDisplay.Abbreviated, label: 'Abbreviated' },
+                            ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
+                                value: NameDisplay;
+                                label: string;
+                            }>, actionMeta: ActionMeta<{
+                                value: NameDisplay;
+                                label: string;
+                            }>) => { updateClassPreferences({...activeClass.classPreferences, nameDisplay: newValue?.value || NameDisplay.First})  }} />
+                                </div>
+                                
+                            </div>
+                            <div className="flex flex-row justify-center">
+                                <button onClick={onCloseClassPrefsModal} className="default-button">Close</button>
+                            </div>
+                        </div>
+                    </Modal>
                 </div>
                 <DeskEditor></DeskEditor>
             </div>

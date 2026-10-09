@@ -47,19 +47,19 @@
 }
 
 .existing-group-button:hover {
-  background: var(--background2);
+  filter: brightness(0.95);
 }
 
 .existing-group-remove-button {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color1);
+  color: var(--black);
   padding: 5px;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .existing-group-remove-button:hover {
-  background: var(--background2);
+  filter: brightness(0.95);
 }
 
 .selectable-option {
@@ -98,7 +98,7 @@
   top: 0;
   width: 100vw;
   height: 100vh;
-  background: var(--background);
+  background: var(--color1);
   z-index: 2;
   display: flex;
   gap: 2rem;
@@ -136,7 +136,7 @@
 }
 
 .student-group-header-container {
-  border-bottom: 1px solid var(--foreground);
+  border-bottom: 1px solid var(--black);
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -163,7 +163,7 @@
 }
 
 .student-group-row-drop-target {
-  background-color: var(--background);
+  background-color: var(--color1);
 }
 
 .student-group-row-entry {

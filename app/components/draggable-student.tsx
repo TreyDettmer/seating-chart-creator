@@ -2,7 +2,7 @@ import "../styles/draggable-student.css";
 import { useDraggable } from "@dnd-kit/react"
 import { MouseEvent } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context"
-import { Tag, Student } from "../app-state";
+import { Tag, Student, NameDisplay } from "../app-state";
 
 export interface DraggableStudentProps {
     id: string,
@@ -46,9 +46,28 @@ export default function DraggableStudentComponent(
         return name
     }
 
+    const displayName = () : string => {
+        if (activeClass == undefined) {
+            return ""
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.Abbreviated) {
+            return student.nameAbbr
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.First) {
+            return student.firstName
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.Last) {
+            return student.lastName
+        }
+        if (activeClass.classPreferences.nameDisplay == NameDisplay.FirstAndLast) {
+            return `${student.firstName} ${student.lastName}`
+        }
+        return ""
+    }
+
     return (
         <button onClick={onClick} ref={ref} className={className()}>
-            <p className={`draggable-student-name ${studentViewEnabled ? 'draggable-student-name-student-view' : ''}`}>{student.firstName}</p>
+            <p className={`draggable-student-name ${studentViewEnabled ? 'draggable-student-name-student-view' : ''}`}>{displayName()}</p>
             {!studentViewEnabled && <ul className="student-tag-marker-container">
                 {tags.map((tag) => {
                     return <li 

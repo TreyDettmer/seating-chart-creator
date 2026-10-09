@@ -13,24 +13,41 @@
 }
 
 .class-list-button {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color1);
+  color: var(--black);
   height: 100%;
   padding: 5px 15px 5px 15px;
   cursor: pointer;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .class-list-button-current {
-  border-bottom: 2px solid var(--foreground);
   font-weight: bold;
 }
 
 .class-list-button:hover {
-  background: var(--background2);
+  filter: brightness(0.95);
+}
+
+.class-list-button-option-button {
+  padding: 0px 5px 0px 5px;
+  background: var(--color1);
+  color: var(--black);
+  font-weight: bold;
+  height: 100%;
+  border-radius: 8px;
+  margin-left: 15px;
+  cursor: pointer;
+  text-align: center;
+  vertical-align:middle;
+  z-index: 1;
+}
+
+.class-list-button-option-button:hover {
+  filter: brightness(0.90);
 }
 
 .toggle-student-view-container {

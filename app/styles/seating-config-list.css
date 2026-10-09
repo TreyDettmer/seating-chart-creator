@@ -6,23 +6,23 @@
   height: 100%;
 }
 .seating-config-button {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color1);
+  color: var(--black);
   height: 100%;
   padding: 5px 15px 5px 15px;
   cursor: pointer;
   display: flex;
   flex-direction: row;
+  align-items: center;
   justify-content: space-between;
 }
 
 .seating-config-button-current {
-  border-bottom: 2px solid var(--foreground);
   font-weight: bold;
 }
 
 .seating-config-button:hover {
-  background: var(--background2);
+  filter: brightness(0.95);
 }
 
 .seating-config-button-text {
@@ -31,8 +31,8 @@
 
 .seating-config-button-option-button {
   padding: 0px 5px 0px 5px;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color1);
+  color: var(--black);
   font-weight: bold;
   height: 100%;
   border-radius: 8px;
@@ -41,6 +41,10 @@
   text-align: center;
   vertical-align:middle;
   z-index: 1;
+}
+
+.seating-config-button-option-button:hover {
+  filter: brightness(0.90);
 }
 
 .seating-config-edit-modal {

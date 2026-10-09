@@ -1,8 +1,8 @@
 @import '../globals.css';
 
 .tags-editor {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color1);
+  color: var(--black);
   width: 500px;
 }
 
@@ -18,17 +18,17 @@
   align-items: center;
   justify-content: space-around;
   padding: 5px 10px 5px 10px;
-  /* border-bottom: 2px solid var(--foreground); */
+  /* border-bottom: 2px solid var(--black); */
 }
 
 .tags-editor-remove-group-button {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color1);
+  color: var(--black);
   padding: 5px;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .tags-editor-remove-group-button:hover {
-  background: var(--background2);
+  filter: brightness(0.95);
 }

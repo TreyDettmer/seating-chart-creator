@@ -143,7 +143,7 @@ export default function TagsEditor() {
         <div className="tags-editor">
 
             <p className="tags-editor-header" >Tags</p>
-            <p className="tags-editor-subheader" >Easily keep students away from each other.</p>
+            <p className="tags-editor-subheader" >Keep students away from each other.</p>
             <DragDropProvider
                 onDragStart={() => { }}
                 onDragMove={() => { }}

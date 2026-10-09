@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: row;
   flex-grow: 2;
-  background-color: var(--background);
+  background-color: var(--color1);
   /* max-height: 95vh; */
   /* overflow-y: scroll; */
   /* align-items: stretch; */
@@ -29,8 +29,8 @@
 }
 
 .sidebar-tab {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color1);
+  color: var(--black);
   height: 100%;
   padding: 5px 15px 5px 15px;
   cursor: pointer;
@@ -40,12 +40,11 @@
 }
 
 .sidebar-tab-current {
-  border-bottom: 2px solid var(--foreground);
   font-weight: bold;
 }
 
 .sidebar-tab:hover {
-  background: var(--background2);
+  filter: brightness(0.95);
 }
 
 .editors-container {

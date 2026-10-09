@@ -7,7 +7,7 @@ import Modal from "./modal";
 import { useToast } from "./toast-context";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import { v4 as uuid } from 'uuid'
-import { FiUserCheck, FiUserX } from 'react-icons/fi'
+import { FiUserCheck, FiUserX, FiAlertCircle } from 'react-icons/fi'
 import Toggle from "./toggle";
 
 
@@ -42,7 +42,6 @@ export default function ClassStudentList() {
     function onImportStudentsFileUploaded(event: any) {
         var csvFile: LocalFile = event.target.files?.[0]
         if (csvFile == null) {
-            console.log('file is null')
             return
         }
         parse<StudentCsvRow>(csvFile, {
@@ -54,10 +53,10 @@ export default function ClassStudentList() {
                 for (let i = 0; i < results.data.length; i++) {
                     var rowData: StudentCsvRow = results.data[i]
                     var student: Student = {
-                        id: `${i}`,
+                        id: uuid(),
                         firstName: `${rowData.FirstName}`,
                         lastName: `${rowData.LastName}`,
-                        gender: rowData.Gender || Gender.Boy,
+                        gender: rowData.Gender || Gender.None,
                         isEsl: rowData.IsEsl || false,
                         iepDesc: rowData.IepDesc || "",
                         tagIds: [],
@@ -72,7 +71,11 @@ export default function ClassStudentList() {
                 }
             },
             error: (err: Error) => {
-
+                console.log(err);
+                toast.open(
+                    toast.toastError("Error", "Issue with provided CSV file")
+                )
+                return
             }
         })
     }
@@ -157,8 +160,6 @@ export default function ClassStudentList() {
         if (confirm(`Are you sure you want to remove student '${student.firstName} ${student.lastName}'?`) == true) {
             dispatch({ type: 'REMOVE_STUDENT', payload: { classId: activeClass.id, studentId: student.id } });
         }
-
-
     }
 
     return (
@@ -197,6 +198,7 @@ export default function ClassStudentList() {
                                             <Select value={{ value: student.gender, label: `${student.gender}` }} options={[
                                                 { value: Gender.Boy, label: 'Boy' },
                                                 { value: Gender.Girl, label: 'Girl' },
+                                                { value: Gender.None, label: 'None' },
                                             ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
                                                 value: Gender;
                                                 label: string;
@@ -249,13 +251,14 @@ export default function ClassStudentList() {
                             <Select value={{ value: newStudentInfo.gender, label: `${newStudentInfo.gender}` }} options={[
                                 { value: Gender.Boy, label: 'Boy' },
                                 { value: Gender.Girl, label: 'Girl' },
+                                { value: Gender.None, label: 'None' },
                             ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
                                 value: Gender;
                                 label: string;
                             }>, actionMeta: ActionMeta<{
                                 value: Gender;
                                 label: string;
-                            }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.Boy }) }} />
+                            }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.None }) }} />
                         </div>
                         <div className="new-student-attribute-row">
                             <p>Is ESL</p>
@@ -304,7 +307,12 @@ export default function ClassStudentList() {
                         <p className="title">Import Students</p>
                     </div>
                     <div>
-                        <p>Upload a CSV file containing FirstName, LastName columns and optional Gender, IsEsl, and IepDesc columns</p>
+                        <p>Upload a CSV file containing FirstName, LastName columns and optional Gender, IsEsl, and IepDesc columns.</p>
+                    </div>
+                    <div className="flex flex-row">
+                        <FiAlertCircle className="text-yellow-400" size={25}></FiAlertCircle>
+                        <p>This will clear existing students from the current class.</p>
+                        <FiAlertCircle className="text-yellow-400" size={25}></FiAlertCircle>
                     </div>
                     <label htmlFor="importStudentsUpload" className="default-button">
                         <input className="hidden" id="importStudentsUpload" type="file" onChange={onImportStudentsFileUploaded} />
