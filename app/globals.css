@@ -109,22 +109,23 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  color: var(--black)
 }
 
 .toggle-button-on {
-  color: var(--black)
+  
 }
 
 .toggle-button-on:hover {
-
+  color: var(--color5)
 }
 
 .toggle-button-off {
-  color: var(--black)
+  
 }
 
 .toggle-button-off:hover {
-
+  color: var(--color5)
 }
 
 .tag-select {

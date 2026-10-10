@@ -5,12 +5,14 @@ import { MouseEvent, useState } from "react";
 import Modal from "./modal";
 import { useToast } from "./toast-context";
 import Toggle from "./toggle";
+import { AppState, SchoolClass, SeatingConfiguration } from "../app-state";
 
 
 export default function ClassListComponent(
 
 ) {
-    const { classes, studentViewEnabled } = useAppState();
+    const { classes, seatingConfigurations: allSeatingConfigurations, studentViewEnabled } = useAppState();
+    const appState = useAppState();
     const activeClass = useActiveClass();
     const dispatch = useAppDispatch();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,6 +87,63 @@ export default function ClassListComponent(
         dispatch({ type: 'EDIT_CLASS', payload: { newClass: {...selectedClass, name: name}}});
     }
 
+    function onDuplicateClass() {
+        var selectedClass = classes[selectedClassId]
+        if (selectedClass == undefined) {
+            return
+        }
+        const existingSeatingConfigs = selectedClass.seatingConfigurationIds.map(x => allSeatingConfigurations[x])
+        const newSeatingConfigs : SeatingConfiguration[] = [];
+        const newClassId = uuid();
+        for (let i = 0; i < existingSeatingConfigs.length; i++) {
+            let duplicatedGrid = existingSeatingConfigs[i].grid.map(row => row.map(cell => ({ ...cell })));
+            for (let row = 0; row < existingSeatingConfigs[i].rows; row++) {
+                for (let col = 0; col < existingSeatingConfigs[i].cols; col++) {
+                    duplicatedGrid[row][col].studentId = null
+                }
+            }
+            var newConfig : SeatingConfiguration = {
+                id: uuid(),
+                classId: newClassId,
+                name: existingSeatingConfigs[i].name,
+                rows: existingSeatingConfigs[i].rows,
+                cols: existingSeatingConfigs[i].cols,
+                grid: duplicatedGrid,
+                selectedCell: null,
+                createdAt: Date.toString(),
+                updatedAt: Date.toString()
+            }
+            newSeatingConfigs.push(newConfig);
+        }
+        const duplicatedPreferences = {...selectedClass.classPreferences}
+        
+        const newClass : SchoolClass = {
+            id: newClassId,
+            name: `${selectedClass.name} (Copy)`,
+            studentIds: [],
+            seatingConfigurationIds: [],
+            activeConfigurationId: null,
+            activeGroupsConfigurationId: null,
+            selectedStudentId: null,
+            keepApartGroupIds: [],
+            keepTogetherGroupIds: [],
+            classPreferences: duplicatedPreferences
+        }
+
+        onCloseEditClassModal()
+        setSelectedClassId('');
+
+        dispatch({ type: 'CREATE_CLASS', payload: { newClass: newClass } });
+
+        for (let i = 0; i < newSeatingConfigs.length; i++) {
+            dispatch({ type: 'ADD_SEATING_CONFIG', payload: { classId: newClassId, config: newSeatingConfigs[i] } });
+        }
+
+        dispatch({ type: 'SET_ACTIVE_CLASS', payload: { classId: newClassId } });
+
+        
+    }
+
     function onDeleteClass() {
         var selectedClass = classes[selectedClassId]
         if (selectedClass == undefined) {
@@ -97,8 +156,51 @@ export default function ClassListComponent(
             setSelectedClassId('');
             dispatch({ type: 'SET_ACTIVE_CLASS', payload: { classId: null } });
         }
-
     }
+
+
+    function onImportState(event: any) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        
+        // Define what happens once the file is fully read
+        reader.onload = (e) => {
+            if (e.target != null && typeof e.target.result === 'string') {
+                try {
+                    let state : AppState = JSON.parse(e.target.result)
+                    dispatch({ type: 'LOAD_STATE', payload: state });
+                } catch (err) {
+                    toast.open(
+                        toast.toastError("Error", "Unable to parse provided file.")
+                    )
+                    return
+                }
+            }
+        };
+
+        reader.onerror = () => {
+            console.error("Error reading the file.");
+        };
+        // Read the file as plain text
+        reader.readAsText(file, 'utf-8');
+    }
+
+    function onExportState() {
+        const fileName = `seating-chart-creator_state_${Date.toString()}.txt`
+        const stringifiedState = JSON.stringify(appState);
+        const blob = new Blob([stringifiedState], { type: 'text/plain;charset=utf-8' });
+        const fileUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(fileUrl);
+    }
+
+
 
     return (
         <div className="class-list-container">
@@ -124,12 +226,15 @@ export default function ClassListComponent(
                     <p>Toggle Student View</p>
                     <Toggle isChecked={studentViewEnabled} onChanged={(newValue) => toggleStudentView(newValue)}></Toggle>
                 </div>
-                {/* {!studentViewEnabled &&
-                    <button className="default-button" onClick={openCloseClassCreationModal}>Import App State</button>
+                {!studentViewEnabled &&
+                    <label htmlFor="importAppStateUpload" className="default-button">
+                        <input className="hidden" accept=".txt" id="importAppStateUpload" type="file" onChange={onImportState} />
+                        Import App State
+                    </label>
                 }
                 {!studentViewEnabled &&
-                    <button className="default-button" onClick={openCloseClassCreationModal}>Export App State</button>
-                } */}
+                    <button className="default-button" onClick={onExportState}>Export App State</button>
+                }
                 
             </ul>
             <Modal open={isModalOpen} onClose={onCloseClassCreationModal}>
@@ -158,6 +263,7 @@ export default function ClassListComponent(
                     </div>
                     <div className="flex flex-row justify-center">
                         <button onClick={onCloseEditClassModal} className="default-button">Close</button>
+                        <button onClick={onDuplicateClass} className="default-button">Duplicate</button>
                         <button onClick={onDeleteClass} className="default-button destructive">Delete</button>
                     </div>
                 </div>

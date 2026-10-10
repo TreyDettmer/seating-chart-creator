@@ -123,6 +123,10 @@ export default function SeatingConfigEditor() {
         if (activeConfig === undefined || activeClass === undefined) {
             return
         }
+
+        if (students.length == 0) {
+            return
+        }
         // Get number of available desks
         var numberOfAvailableDesks = 0
         for (let rowIndex = 0; rowIndex < activeConfig.rows; rowIndex++) {
@@ -600,7 +604,7 @@ export default function SeatingConfigEditor() {
                     </DragDropProvider>
                     <div className="config-editor-actions-panel">
                         <button onClick={openShufflePreferencesModal} className="default-button">Shuffle Preferences</button>
-                        <button onClick={onShuffleStudents} className="default-button">Shuffle Students</button>
+                        {students.length > 0 && <button onClick={onShuffleStudents} className="default-button">Shuffle Students</button>}
                         <button onClick={onAddDesk} className="default-button">Add Desk</button>
                         {areStudentsMissing() && <button onClick={onAddMissingStudents} className="default-button">Add Missing Student(s)</button>}
                         <button onClick={openClassPrefsModal} className="default-button">Classroom Preferences</button>

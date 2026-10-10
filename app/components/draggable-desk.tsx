@@ -16,7 +16,7 @@ export default function DraggableDeskComponent(
     props : DraggableDeskProps
 ) {
     const dispatch = useAppDispatch();
-    const { tags: allTags } = useAppState()
+    const { tags: allTags, studentViewEnabled } = useAppState()
     const activeConfig = useActiveSeatingConfig();
     if (activeConfig === undefined) {
         return null;
@@ -38,6 +38,9 @@ export default function DraggableDeskComponent(
     const className = () : string => {
         var name = 'desk'
         if (activeConfig === undefined) {
+            return name;
+        }
+        if (studentViewEnabled) {
             return name;
         }
         if (isDragging) {

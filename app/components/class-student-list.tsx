@@ -315,7 +315,7 @@ export default function ClassStudentList() {
                         <FiAlertCircle className="text-yellow-400" size={25}></FiAlertCircle>
                     </div>
                     <label htmlFor="importStudentsUpload" className="default-button">
-                        <input className="hidden" id="importStudentsUpload" type="file" onChange={onImportStudentsFileUploaded} />
+                        <input className="hidden" accept=".csv" id="importStudentsUpload" type="file" onChange={onImportStudentsFileUploaded} />
                         Import Students
                     </label>
                     <div className="flex flex-row justify-center">

@@ -51,15 +51,14 @@
 }
 
 .existing-group-remove-button {
-  background: var(--color1);
-  color: var(--black);
+  color: red;
   padding: 5px;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .existing-group-remove-button:hover {
-  filter: brightness(0.95);
+  color: rgb(172, 0, 0);
 }
 
 .selectable-option {

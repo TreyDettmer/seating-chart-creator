@@ -45,6 +45,11 @@
 }
 
 .shuffle-preference-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.shuffle-preference-row .spacer {
+  flex-grow: 1;
 }

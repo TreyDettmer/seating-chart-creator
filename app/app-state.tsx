@@ -4,6 +4,7 @@ import { components } from 'react-select';
 export type AppAction =
   | { type: 'LOAD_STATE'; payload: AppState }
   | { type: 'ADD_CLASS'; payload: { id: string; name: string } }
+  | { type: 'CREATE_CLASS'; payload: { newClass : SchoolClass } }
   | { type: 'SET_ACTIVE_CLASS'; payload: { classId: string | null } }
   | { type: 'EDIT_CLASS'; payload: { newClass : SchoolClass } }
   | { type: 'REMOVE_CLASS'; payload: { classId : string } }
@@ -132,7 +133,7 @@ export interface ClassPreferences {
 }
 
 export const initialClassPreferences: ClassPreferences = {
-  floorColor: "blue",
+  floorColor: "#6b7c98",
   nameDisplay: NameDisplay.First
 }
 
@@ -335,6 +336,17 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         activeClassId: state.activeClassId ?? id,
       };
     }
+
+    case 'CREATE_CLASS':
+      const {newClass} = action.payload;
+      return {
+        ...state,
+        classes: {
+          ...state.classes,
+          [newClass.id]: newClass,
+        },
+        activeClassId: newClass.id,
+      };
 
     case 'SET_ACTIVE_CLASS':
       return { ...state, activeClassId: action.payload.classId };
@@ -630,7 +642,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         seatingConfigurations: {
           ...state.seatingConfigurations,
-          [configId]: newConfig,
+          [configId]: {
+            ...newConfig,
+            updatedAt: Date.toString()
+          },
         },
       };
     }

@@ -201,6 +201,10 @@ export default function GroupsEditor() {
             return
         }
 
+        if (students.length == 0) {
+            return
+        }
+
 
 
         var groupSetTagsMap: Map<string, TagWithStudents[]> = new Map();
@@ -501,7 +505,7 @@ export default function GroupsEditor() {
                                 label: string;
                             }>) => { setNumberOfGroups(newValue?.value || 2) }}
                         />
-                        <button onClick={onGenerateGroups} className="default-button">Generate Groups</button>
+                        {students.length > 0 && <button onClick={onGenerateGroups} className="default-button">Generate Groups</button>}
                     </div>
                     <ul className="existing-groups-container">
                         {groupsConfigurations.map(x => {
