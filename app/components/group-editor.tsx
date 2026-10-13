@@ -72,7 +72,7 @@ export default function GroupEditor() {
     return (
         <div className="group-editor">
             <p>Selected Group Options</p>
-            <input value={selectedGroup.name} onChange={(e) => updateGroupName(e.target.value)} />
+            <input className="modal-text-input" value={selectedGroup.name} onChange={(e) => updateGroupName(e.target.value)} />
             <p>Assigned Tags</p>
             <ul>
                 <Select

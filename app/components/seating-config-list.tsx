@@ -393,7 +393,7 @@ export default function SeatingConfigList(
     }
 
     function onUpdateConfig(newName: string) {
-        var name = newName.trim()
+        var name = newName
         dispatch({ type: 'UPDATE_SEATING_CONFIG', payload: { configId: selectedConfigId, newConfig: { ...allSeatingConfigs[selectedConfigId], name: name, updatedAt: Date.toString() } } });
     }
 

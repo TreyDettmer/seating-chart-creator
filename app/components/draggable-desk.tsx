@@ -5,15 +5,15 @@ import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } f
 import { Tag } from "../app-state";
 
 export interface DraggableDeskProps {
-    id : string,
-    cellId : string | null,
-    cellRow : number,
-    cellCol : number,
-    isDropTarget : boolean,
+    id: string,
+    cellId: string | null,
+    cellRow: number,
+    cellCol: number,
+    isDropTarget: boolean,
 }
 
 export default function DraggableDeskComponent(
-    props : DraggableDeskProps
+    props: DraggableDeskProps
 ) {
     const dispatch = useAppDispatch();
     const { tags: allTags, studentViewEnabled } = useAppState()
@@ -23,19 +23,19 @@ export default function DraggableDeskComponent(
     }
     const { ref, isDragging } = useDraggable({ id: props.id })
     const tagIds = activeConfig.grid[props.cellRow][props.cellCol].tagIds;
-    const tags : Tag[] = tagIds.map(x => {
+    const tags: Tag[] = tagIds.map(x => {
         return allTags[x]
     })
 
-    function onClick(event : MouseEvent<HTMLButtonElement>) {
+    function onClick(event: MouseEvent<HTMLButtonElement>) {
         event.stopPropagation()
-    if (activeConfig === undefined) {
-        return null;
-    }
-        dispatch({ type: 'TOGGLE_SELECTED_CELL', payload: { configId: activeConfig.id, cell: {row: props.cellRow, col: props.cellCol} } });
+        if (activeConfig === undefined) {
+            return null;
+        }
+        dispatch({ type: 'TOGGLE_SELECTED_CELL', payload: { configId: activeConfig.id, cell: { row: props.cellRow, col: props.cellCol } } });
     }
 
-    const className = () : string => {
+    const className = (): string => {
         var name = 'desk'
         if (activeConfig === undefined) {
             return name;
@@ -60,17 +60,17 @@ export default function DraggableDeskComponent(
 
     return (
         <button onClick={onClick} ref={ref} className={className()}>
-            <ul className="desk-tag-marker-container">
+            {!studentViewEnabled && <ul className="desk-tag-marker-container">
                 {tags.map((tag) => {
-                    return <li 
-                    className="desk-tag-marker"
-                    key={tag.id}
-                    style={{
-                        backgroundColor: `${tag.color}`
-                    }}
+                    return <li
+                        className="desk-tag-marker"
+                        key={tag.id}
+                        style={{
+                            backgroundColor: `${tag.color}`
+                        }}
                     ></li>
                 })}
-            </ul>    
+            </ul>}
         </button>
     )
 }

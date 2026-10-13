@@ -44,7 +44,7 @@ export function StudentGroupRowEntry(
     { groupsConfigurationId, groupId, studentId }: StudentGroupRowEntryProps
 ) {
     const { ref, isDragging } = useDraggable({ id: `student-${studentId}` })
-    const { students: allStudents, groupsConfigurations: allGroupsConfigurations } = useAppState();
+    const { students: allStudents, groupsConfigurations: allGroupsConfigurations, studentViewEnabled, tags: allTags } = useAppState();
     const activeClass = useActiveClass();
     const displayName = () : string => {
         if (activeClass == undefined) {
@@ -67,6 +67,17 @@ export function StudentGroupRowEntry(
     return (
         <div ref={ref} className="student-group-row-entry">
             {displayName()}
+            {!studentViewEnabled && <ul className="group-entry-tag-marker-container">
+                                            {allStudents[studentId].tagIds.map((tagId) => {
+                                                return <li
+                                                    className="group-entry-tag-marker"
+                                                    key={tagId}
+                                                    style={{
+                                                        backgroundColor: `${allTags[tagId].color}`
+                                                    }}
+                                                ></li>
+                                            })}
+                                        </ul>}
         </div>
     )
 }

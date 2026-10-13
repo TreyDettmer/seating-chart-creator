@@ -3,7 +3,7 @@
 .tags-editor {
   background: var(--color1);
   color: var(--black);
-  width: 500px;
+  width: 100%;
 }
 
 .tags-editor-header {
@@ -18,17 +18,16 @@
   align-items: center;
   justify-content: space-around;
   padding: 5px 10px 5px 10px;
-  /* border-bottom: 2px solid var(--black); */
 }
 
 .tags-editor-remove-group-button {
-  background: var(--color1);
-  color: var(--black);
+  color: red;
+  cursor: pointer;
   padding: 5px;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .tags-editor-remove-group-button:hover {
-  filter: brightness(0.95);
+  color: rgb(172, 0, 0);
 }

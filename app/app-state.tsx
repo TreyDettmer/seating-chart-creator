@@ -172,7 +172,7 @@ export interface Student {
   firstName: string;
   lastName: string;
   gender: Gender;
-  isEsl: boolean;
+  isELL: boolean;
   iepDesc: string;
   tagIds: string[];
   nameAbbr: string;
@@ -180,8 +180,9 @@ export interface Student {
 }
 
 export enum Gender {
-  Boy = "Boy",
-  Girl = "Girl",
+  Male = "Male",
+  Female = "Female",
+  NonBinary = "NonBinary",
   None = "None"
 }
 
@@ -189,7 +190,7 @@ export interface StudentCsvRow {
   FirstName: string;
   LastName: string;
   Gender?: Gender;
-  IsEsl?: boolean;
+  IsELL?: boolean;
   IepDesc?: string;
 }
 
@@ -207,13 +208,13 @@ export interface KeepTogetherGroup {
 
 export interface StudentListDisplayPrefs {
   showGender: boolean;
-  showIsEsl: boolean;
+  showIsELL: boolean;
   showIepDesc: boolean;
 }
 
 export const defaultStudentListDisplayPrefs : StudentListDisplayPrefs = {
   showGender: false,
-  showIsEsl: false,
+  showIsELL: false,
   showIepDesc: false
 }
 

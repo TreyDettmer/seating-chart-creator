@@ -1,7 +1,7 @@
 import "../styles/groups-editor.css";
 import { useMemo, useState, MouseEvent } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
-import { GroupsConfiguration, Student, CustomOption, SelectNumberOption, StudentGroup, TagWithStudents, KeepApartGroup, KeepTogetherGroup } from "../app-state";
+import { GroupsConfiguration, Student, CustomOption, SelectNumberOption, StudentGroup, TagWithStudents, KeepApartGroup, KeepTogetherGroup, SelectOption } from "../app-state";
 import { useToast } from "./toast-context";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
@@ -20,7 +20,7 @@ export default function GroupsEditor() {
     const toast = useToast();
     const [isShufflePreferencesModalOpen, setIsShufflePreferencesModalOpen] = useState(false)
     const [useAllStudents, setUseAllStudents] = useState(true);
-    const [numberOfGroups, setNumberOfGroups] = useState(1);
+    const [selectedGroupOption, setSelectedGroupOption] = useState('co 2');
     if (activeClass == undefined) {
         return null;
     }
@@ -33,34 +33,93 @@ export default function GroupsEditor() {
     const keepTogetherGroups: KeepTogetherGroup[] = activeClass.keepTogetherGroupIds.map(x => allKeepTogetherGroups[x])
     const groupsConfigurations: GroupsConfiguration[] = Object.values(allGroupsConfigurations).filter(x => x.classId == activeClass.id);
     const groupsConfiguration: GroupsConfiguration | undefined = allGroupsConfigurations[activeClass.activeGroupsConfigurationId || ''];
-    var numberOfGroupsOptions: SelectNumberOption[] = students.map((x, index) => {
-        return { value: index + 1, label: `${index + 1} groups` }
-    })
+
+    var groupSelectOptions: SelectOption[] = [
+        { value: 'co 2', label: '2 groups'},
+        { value: 'co 3', label: '3 groups'},
+        { value: 'co 4', label: '4 groups'},
+        { value: 'co 5', label: '5 groups'},
+        { value: 'co 6', label: '6 groups'},
+        { value: 'co 7', label: '7 groups'},
+        { value: 'co 8', label: '8 groups'},
+        { value: 'go 2', label: 'groups of 2'},
+        { value: 'go 3', label: 'groups of 3'},
+        { value: 'go 4', label: 'groups of 4'},
+        { value: 'go 5', label: 'groups of 5'},
+        { value: 'go 6', label: 'groups of 6'},
+    ]
+    
 
     function onGenerateGroups() {
         if (activeClass == undefined) {
             return null;
         }
         var studentGroups: StudentGroup[] = [];
-        for (let i = 0; i < numberOfGroups; i++) {
-            studentGroups.push(
-                {
-                    id: uuid(),
-                    name: `Group ${i + 1}`,
-                    studentIds: [],
-                    tagIds: []
-                }
-            )
-        }
         var filteredStudents = useAllStudents ? students : students.filter(x => x.isPresent == true);
-        for (let i = 0; i < filteredStudents.length; i++) {
-            studentGroups[i % numberOfGroups].studentIds.push(filteredStudents[i].id);
+        var isSetNumberOfGroups = selectedGroupOption.includes('co');
+        var numberOfGroups = 2;
+        if (isSetNumberOfGroups) {
+            numberOfGroups = parseInt(selectedGroupOption.replaceAll('co ', ''))
+            if (numberOfGroups > filteredStudents.length) {
+                toast.open(
+                    toast.toastError("Group Creation Issue", 'Not enough students to fill this many groups')
+                )
+                return
+            }
+            for (let i = 0; i < numberOfGroups; i++) {
+                studentGroups.push(
+                    {
+                        id: uuid(),
+                        name: `Group ${i + 1}`,
+                        studentIds: [],
+                        tagIds: []
+                    }
+                )
+            }
+            
+            for (let i = 0; i < filteredStudents.length; i++) {
+                studentGroups[i % numberOfGroups].studentIds.push(filteredStudents[i].id);
+            }
+        } else {
+            var groupsOf = parseInt(selectedGroupOption.replaceAll('go ', ''))
+            var currentGroupStudentIds : string[] = [];
+            var groupsAdded = 0;
+            for (let i = 0; i < filteredStudents.length; i++) {
+                if (currentGroupStudentIds.length < groupsOf) {
+                    currentGroupStudentIds.push(filteredStudents[i].id);
+                }
+                if (currentGroupStudentIds.length === groupsOf) {
+                    studentGroups.push(
+                        {
+                            id: uuid(),
+                            name: `Group ${groupsAdded + 1}`,
+                            studentIds: [...currentGroupStudentIds],
+                            tagIds: []
+                        }
+                    )
+                    groupsAdded += 1;
+                    currentGroupStudentIds = [];
+                }
+            }
+            if (currentGroupStudentIds.length > 0) {
+                studentGroups.push(
+                    {
+                        id: uuid(),
+                        name: `Group ${groupsAdded + 1}`,
+                        studentIds: [...currentGroupStudentIds],
+                        tagIds: []
+                    }
+                )
+            }
         }
+        
+
+        
         var newGroupId = uuid()
         var newGroupsConfiguration: GroupsConfiguration = {
             id: newGroupId,
             classId: activeClass.id,
-            name: "Group Config",
+            name: `Group Config ${groupsConfigurations.length + 1}`,
             studentGroups: studentGroups,
             selectedGroupId: null
         }
@@ -495,23 +554,27 @@ export default function GroupsEditor() {
                         <p>Into</p>
                         <Select components={{ Option: CustomOption }}
                             classNamePrefix="select"
-                            options={numberOfGroupsOptions}
-                            value={{ value: numberOfGroups, label: `${numberOfGroups} groups` }}
+                            options={groupSelectOptions}
+                            value={{ value: selectedGroupOption, label: `${groupSelectOptions.find(x => x.value == selectedGroupOption)?.label || 'null'}` }}
                             onChange={(newValue: SingleValue<{
-                                value: number;
+                                value: string;
                                 label: string;
                             }>, _: ActionMeta<{
-                                value: number;
+                                value: string;
                                 label: string;
-                            }>) => { setNumberOfGroups(newValue?.value || 2) }}
+                            }>) => { setSelectedGroupOption(newValue?.value || 'co 2') }}
                         />
+                        
                         {students.length > 0 && <button onClick={onGenerateGroups} className="default-button">Generate Groups</button>}
                     </div>
+                    <p className="existing-groups-header">
+                        Existing Groups
+                    </p>
                     <ul className="existing-groups-container">
                         {groupsConfigurations.map(x => {
                             return (
                                 <li className="existing-groups-row" key={x.id}>
-                                    <button className="existing-group-button" onClick={() => onExistingGroupsConfigurationSelected(x.id)}>{x.name}</button>
+                                    <button className="default-button" onClick={() => onExistingGroupsConfigurationSelected(x.id)}>{x.name}</button>
                                     <button className="existing-group-remove-button" onClick={() => onDeleteGroup(x.id, x.name)}>X</button>
                                 </li>
                             )
@@ -527,9 +590,10 @@ export default function GroupsEditor() {
                     <div className="current-group-options-container">
                         <button onClick={onClearActiveGroupsConfigurationId} className="default-button">Back</button>
                         <button onClick={() => setIsShufflePreferencesModalOpen(true)} className="default-button">Shuffle Preferences</button>
-                        <button onClick={shuffleStudents} className="default-button">Shuffle</button>
+                        <button onClick={shuffleStudents} className={!studentViewEnabled ? `default-button` : 'default-button shuffle-button-student-view'}>Shuffle</button>
                         {areStudentsMissing() && <button onClick={onAddMissingStudents} className="default-button">Add Missing Student(s)</button>}
                     </div>
+                    <div className={ studentViewEnabled ? 'groups-grid-outer-student-view' : 'groups-grid-outer'}>
                     <div className={ studentViewEnabled ? 'groups-grid-student-view' : 'groups-grid'}>
                         <DragDropProvider
                             onDragStart={() => { }}
@@ -569,6 +633,7 @@ export default function GroupsEditor() {
                                 )
                             })}
                         </DragDropProvider>
+                    </div>
                     </div>
                     <ShufflePreferencesModal open={isShufflePreferencesModalOpen} onClose={onCloseShufflePreferencesModal}></ShufflePreferencesModal>
                 </div>

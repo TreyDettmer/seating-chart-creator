@@ -64,10 +64,92 @@
 .classroom-floor-grid-student-view {
   background-color: var(--tertiary);
   flex: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   margin: auto;
   width: 1700px;
   display: grid;
   z-index: 2;
+}
+
+.classroom-floor-text-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-columns: 33% auto 33%;
+  grid-template-columns: 33% auto 33%;
+}
+
+.classroom-floor-text-container-student-view {
+  flex: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: auto;
+  width: 1700px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 33% auto 33%;
+  grid-template-columns: 33% auto 33%;
+}
+
+.floor-text-input-container {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  max-width: 100%;
+}
+
+.floor-text-input-container.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.floor-text-input-container.end {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+}
+
+.floor-text-input {
+  background-color: var(--color1);
+  color: var(--black);
+  border: 1px solid var(--color2);
+  border-radius: 5px;
+  flex-grow: 0;
+  text-align: center;
+  width: 100%;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.floor-text-input.left {
+  text-align: left;
+}
+
+.floor-text-input.right {
+  text-align: right;
+}
+
+.floor-text-input.hide {
+  background-color: transparent;
+  color: var(--black);
+  border: none;
+  flex-grow: 0;
+}
+
+.floor-text-input.student-view {
+  font-size: 1.3rem;
+}
+
+.floor-spacer {
+
 }
 
 .class-prefs-modal {

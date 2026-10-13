@@ -54,7 +54,7 @@ export default function TagsEditor() {
         }
         var modifiedTag: Tag = {
             ...tags[tagId],
-            name: newName.trim()
+            name: newName
         }
         dispatch({ type: 'EDIT_TAG', payload: { tagId: tagId, tag: modifiedTag } });
 
@@ -143,7 +143,7 @@ export default function TagsEditor() {
         <div className="tags-editor">
 
             <p className="tags-editor-header" >Tags</p>
-            <p className="tags-editor-subheader" >Keep students away from each other.</p>
+            <p className="tags-editor-subheader" >Assignable to students, desks, and groups. Ordered by priority.</p>
             <DragDropProvider
                 onDragStart={() => { }}
                 onDragMove={() => { }}

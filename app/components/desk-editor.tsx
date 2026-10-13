@@ -35,7 +35,7 @@ export default function DeskEditor() {
     }
 
     if (activeConfig === undefined || activeConfig.selectedCell == null) {
-        return (<div className="desk-editor"></div>)
+        return null;
     }
 
     const floorCell = activeConfig.grid[activeConfig.selectedCell.row][activeConfig.selectedCell.col]

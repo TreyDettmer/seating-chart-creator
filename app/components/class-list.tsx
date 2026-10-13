@@ -79,7 +79,7 @@ export default function ClassListComponent(
     };
 
     function onUpdateClassName(newName: string) {
-        var name = newName.trim()
+        var name = newName
         var selectedClass = classes[selectedClassId]
         if (selectedClass == undefined) {
             return
@@ -205,9 +205,11 @@ export default function ClassListComponent(
     return (
         <div className="class-list-container">
             <ul className="class-list">
+                <div className="logo-container">
+                    <p>Seating Chart Creator</p>
+                </div>
                 {Object.values(classes).map(x => {
                     return (
-                        // <button onClick={() => handleSwitchClass(x.id)} className={`class-list-button ${x.id === activeClass?.id ? "class-list-button-current" : ""}`} key={x.id}>{x.name}</button>
                         <div className={`class-list-button ${x.id === activeClass?.id ? "class-list-button-current" : ""}`} onClick={() => handleSwitchClass(x.id)} key={x.id}>
 
                             <div className="flex flex-col justify-center">
@@ -221,9 +223,9 @@ export default function ClassListComponent(
                     
                     )
                 })}
-                <button className={`class-list-button`} onClick={openCloseClassCreationModal}>Add Class</button>
+                <button className={`class-list-button`} onClick={openCloseClassCreationModal}>New Class</button>
                 <div className={studentViewEnabled ? 'toggle-student-view-container-active' : 'toggle-student-view-container'}>
-                    <p>Toggle Student View</p>
+                    <p>Toggle Presentation View</p>
                     <Toggle isChecked={studentViewEnabled} onChanged={(newValue) => toggleStudentView(newValue)}></Toggle>
                 </div>
                 {!studentViewEnabled &&
@@ -243,7 +245,7 @@ export default function ClassListComponent(
                         <p className="title">Create A Class</p>
                     </div>
                     <div>
-                        <p>Name</p>
+                        <p>Class Name</p>
                         <input className="modal-text-input" value={newClassName} onChange={(e) => setNewClassName(e.target.value) }></input>
                     </div>
                     <div className="flex flex-row justify-center">

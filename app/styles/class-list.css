@@ -12,6 +12,26 @@
   width: 100%;
 }
 
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0px 5px 0px 5px;
+  margin-right: 5px;
+  color: white;
+  background-color: var(--color5);
+}
+
+.logo-container p {
+  text-shadow: 1px 1px 1px black;
+  font-size: 1.25rem;
+}
+
+.class-list .class-list-button :not(:last-child)::after {
+
+}
+
 .class-list-button {
   background: var(--color1);
   color: var(--black);
@@ -22,6 +42,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  position: relative;
 }
 
 .class-list-button-current {

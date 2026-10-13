@@ -20,13 +20,13 @@ export default function ClassStudentList() {
         firstName: string;
         lastName: string;
         gender: Gender;
-        isEsl: boolean;
+        isELL: boolean;
         iepDesc: string;
     }
     const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
     const [isTablePrefsModalOpen, setIsTablePrefsModalOpen] = useState(false);
     const [isImportStudentsModalOpen, setIsImportStudentsModalOpen] = useState(false);
-    const [newStudentInfo, setNewStudentInfo] = useState<NewStudentInfoType>({ firstName: "", lastName: "", gender: Gender.Boy, isEsl: false, iepDesc: "" })
+    const [newStudentInfo, setNewStudentInfo] = useState<NewStudentInfoType>({ firstName: "", lastName: "", gender: Gender.None, isELL: false, iepDesc: "" })
     const toast = useToast()
 
     if (activeClass == undefined) {
@@ -57,7 +57,7 @@ export default function ClassStudentList() {
                         firstName: `${rowData.FirstName}`,
                         lastName: `${rowData.LastName}`,
                         gender: rowData.Gender || Gender.None,
-                        isEsl: rowData.IsEsl || false,
+                        isELL: rowData.IsELL || false,
                         iepDesc: rowData.IepDesc || "",
                         tagIds: [],
                         nameAbbr: "",
@@ -135,7 +135,7 @@ export default function ClassStudentList() {
             firstName: newStudentInfo.firstName.trim(),
             lastName: newStudentInfo.lastName.trim(),
             gender: newStudentInfo.gender,
-            isEsl: newStudentInfo.isEsl,
+            isELL: newStudentInfo.isELL,
             iepDesc: newStudentInfo.iepDesc.trim(),
             tagIds: [],
             nameAbbr: "",
@@ -143,7 +143,7 @@ export default function ClassStudentList() {
         }
         dispatch({ type: 'ADD_STUDENT', payload: { classId: activeClass.id, student: newStudent } });
         setIsAddStudentModalOpen(false)
-        setNewStudentInfo({ firstName: "", lastName: "", gender: Gender.Boy, isEsl: false, iepDesc: "" })
+        setNewStudentInfo({ firstName: "", lastName: "", gender: Gender.None, isELL: false, iepDesc: "" })
     }
 
     function onStudentUpdated(updatedStudent: Student) {
@@ -165,14 +165,14 @@ export default function ClassStudentList() {
     return (
         <div>
             <div className="student-list-table-container">
-                <table className="student-list-table">
+                {students.length > 0 && <table className="student-list-table">
                     <thead>
                         <tr>
                             <th>Is Present</th>
                             <th>First Name</th>
                             <th>Last Name</th>
                             {studentListDisplayPrefs.showGender && <th>Gender</th>}
-                            {studentListDisplayPrefs.showIsEsl && <th>Is ESL?</th>}
+                            {studentListDisplayPrefs.showIsELL && <th>Is ELL?</th>}
                             {studentListDisplayPrefs.showIepDesc && <th>IEP</th>}
                             <th></th>
                         </tr>
@@ -196,26 +196,27 @@ export default function ClassStudentList() {
                                     {studentListDisplayPrefs.showGender &&
                                         <td>
                                             <Select value={{ value: student.gender, label: `${student.gender}` }} options={[
-                                                { value: Gender.Boy, label: 'Boy' },
-                                                { value: Gender.Girl, label: 'Girl' },
+                                                { value: Gender.Male, label: 'Male' },
+                                                { value: Gender.Female, label: 'Female' },
+                                                { value: Gender.NonBinary, label: 'NonBinary' },
                                                 { value: Gender.None, label: 'None' },
                                             ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
                                                 value: Gender;
                                                 label: string;
-                                            }>, actionMeta: ActionMeta<{
+                                            }>, _: ActionMeta<{
                                                 value: Gender;
                                                 label: string;
-                                            }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.Boy }) }} />
+                                            }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.None }) }} />
                                         </td>
                                     }
-                                    {studentListDisplayPrefs.showIsEsl &&
+                                    {studentListDisplayPrefs.showIsELL &&
                                         <td>
-                                            <Toggle isChecked={student.isEsl} onChanged={(newVal: boolean) => onStudentUpdated({ ...student, isEsl: newVal })} ></Toggle>
+                                            <Toggle isChecked={student.isELL} onChanged={(newVal: boolean) => onStudentUpdated({ ...student, isELL: newVal })} ></Toggle>
                                         </td>
                                     }
                                     {studentListDisplayPrefs.showIepDesc &&
                                         <td>
-                                            <input value={student.iepDesc} onChange={e => onStudentUpdated({ ...student, iepDesc: e.target.value.trim() })}></input>
+                                            <input value={student.iepDesc} onChange={e => onStudentUpdated({ ...student, iepDesc: e.target.value })}></input>
                                         </td>
                                     }
                                     <td>
@@ -226,6 +227,7 @@ export default function ClassStudentList() {
                         })}
                     </tbody>
                 </table>
+                }
             </div>
             <div className="student-list-actions-container">
                 <button className="default-button" onClick={openAddStudentModal}>Add Student</button>
@@ -249,8 +251,9 @@ export default function ClassStudentList() {
                         <div className="new-student-attribute-row">
                             <p>Gender</p>
                             <Select value={{ value: newStudentInfo.gender, label: `${newStudentInfo.gender}` }} options={[
-                                { value: Gender.Boy, label: 'Boy' },
-                                { value: Gender.Girl, label: 'Girl' },
+                                { value: Gender.Male, label: 'Male' },
+                                { value: Gender.Female, label: 'Female' },
+                                { value: Gender.NonBinary, label: 'NonBinary' },
                                 { value: Gender.None, label: 'None' },
                             ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
                                 value: Gender;
@@ -261,12 +264,12 @@ export default function ClassStudentList() {
                             }>) => { setNewStudentInfo({ ...newStudentInfo, gender: newValue?.value || Gender.None }) }} />
                         </div>
                         <div className="new-student-attribute-row">
-                            <p>Is ESL</p>
-                            <Toggle isChecked={newStudentInfo.isEsl} onChanged={(newValue) => { setNewStudentInfo({ ...newStudentInfo, isEsl: newValue }) }}></Toggle>
+                            <p>Is ELL</p>
+                            <Toggle isChecked={newStudentInfo.isELL} onChanged={(newValue) => { setNewStudentInfo({ ...newStudentInfo, isELL: newValue }) }}></Toggle>
                         </div>
                         <div className="new-student-attribute-row">
                             <p>IEP Description</p>
-                            <input className="modal-text-input" value={newStudentInfo.iepDesc} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, iepDesc: e.target.value.trim() })} />
+                            <input className="modal-text-input" value={newStudentInfo.iepDesc} onChange={(e) => setNewStudentInfo({ ...newStudentInfo, iepDesc: e.target.value })} />
                         </div>
                     </div>
                     <div className="flex flex-row justify-center">
@@ -287,8 +290,8 @@ export default function ClassStudentList() {
                             <Toggle isChecked={studentListDisplayPrefs.showGender} onChanged={(newValue) => { updateStudentListDisplayPrefs({ ...studentListDisplayPrefs, showGender: newValue }) }}></Toggle>
                         </div>
                         <div className="new-student-attribute-row">
-                            <p>Show Is ESL</p>
-                            <Toggle isChecked={studentListDisplayPrefs.showIsEsl} onChanged={(newValue) => { updateStudentListDisplayPrefs({ ...studentListDisplayPrefs, showIsEsl: newValue }) }}></Toggle>
+                            <p>Show Is ELL</p>
+                            <Toggle isChecked={studentListDisplayPrefs.showIsELL} onChanged={(newValue) => { updateStudentListDisplayPrefs({ ...studentListDisplayPrefs, showIsELL: newValue }) }}></Toggle>
                         </div>
                         <div className="new-student-attribute-row">
                             <p>Show IEP</p>
@@ -307,12 +310,12 @@ export default function ClassStudentList() {
                         <p className="title">Import Students</p>
                     </div>
                     <div>
-                        <p>Upload a CSV file containing FirstName, LastName columns and optional Gender, IsEsl, and IepDesc columns.</p>
+                        <p>Upload a CSV file containing FirstName, LastName columns and optional Gender, IsELL, and IepDesc columns.</p>
                     </div>
                     <div className="flex flex-row">
-                        <FiAlertCircle className="text-yellow-400" size={25}></FiAlertCircle>
+                        <FiAlertCircle className="text-yellow-500" size={25}></FiAlertCircle>
                         <p>This will clear existing students from the current class.</p>
-                        <FiAlertCircle className="text-yellow-400" size={25}></FiAlertCircle>
+                        <FiAlertCircle className="text-yellow-500" size={25}></FiAlertCircle>
                     </div>
                     <label htmlFor="importStudentsUpload" className="default-button">
                         <input className="hidden" accept=".csv" id="importStudentsUpload" type="file" onChange={onImportStudentsFileUploaded} />

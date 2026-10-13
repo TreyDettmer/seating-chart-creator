@@ -28,6 +28,10 @@
   gap: 10px;
 }
 
+.existing-groups-header {
+  text-decoration: underline;
+}
+
 .existing-groups-container {
 
 }
@@ -83,6 +87,23 @@
   justify-content: start;
 }
 
+.groups-grid-outer {
+
+}
+
+.groups-grid-outer-student-view {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--color1);
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .groups-grid {
   display: flex;
   gap: 2rem;
@@ -92,12 +113,7 @@
 }
 
 .groups-grid-student-view {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  background: var(--color1);
+  max-width: 1200px;
   z-index: 2;
   display: flex;
   gap: 2rem;
@@ -105,14 +121,14 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: baseline;
-  padding-top: 25vh;
 }
 
 .student-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: var(--background2);
+  border: 2px solid var(--color5);
+  border-radius: 10px;
   padding: 10px;
   min-width: 200px;
   position: relative;
@@ -123,7 +139,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: var(--background2);
+  border: 2px solid var(--color5);
+  border-radius: 10px;
   padding: 10px;
   min-width: 200px;
   position: relative;
@@ -159,6 +176,7 @@
   height: 50px;
   width: 100%;
   margin: 5px 0px 5px 0px;
+  
 }
 
 .student-group-row-drop-target {
@@ -173,7 +191,9 @@
   width: 95%;
   height: 95%;
   border: 1px solid var(--foreground2);
+  background-color: var(--color1);
   border-radius: 10px;
+  position: relative;
 }
 
 
@@ -185,9 +205,35 @@
   display: flex;
   flex-direction: row;
   align-items: end;
+  overflow: hidden;
+  
 }
 
 .group-tag-marker {
   width: 25px;
   height: 25px;
+  border-radius: 10px;
+}
+
+.group-entry-tag-marker-container {
+  width: 100%;
+  bottom: 0;
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+}
+
+.group-entry-tag-marker {
+  width: 15px;
+  height: 15px;
+  border-radius: 5px;
+}
+
+.shuffle-button-student-view {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
 }

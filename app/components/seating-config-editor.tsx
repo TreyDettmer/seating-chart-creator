@@ -23,6 +23,7 @@ export default function SeatingConfigEditor() {
         tags: allTags, shufflePreferences, studentViewEnabled } = useAppState();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isClassPrefsModalOpen, setIsClassPrefsModalOpen] = useState(false);
+    const [canEditLabels, setCanEditLabels] = useState(false);
     const dispatch = useAppDispatch();
     const activeConfig = useActiveSeatingConfig()
 
@@ -138,7 +139,7 @@ export default function SeatingConfigEditor() {
         }
         if (activeClass.studentIds.length > numberOfAvailableDesks) {
             toast.open(
-                toast.toastWarning("Warning", "Not enough desks.")
+                toast.toastError("Error", "Not enough desks.")
             )
             return
         }
@@ -485,7 +486,7 @@ export default function SeatingConfigEditor() {
         setIsClassPrefsModalOpen(true);
     }
 
-    function updateClassPreferences(newPreferences : ClassPreferences) {
+    function updateClassPreferences(newPreferences: ClassPreferences) {
         if (activeClass == undefined) {
             return
         }
@@ -512,7 +513,7 @@ export default function SeatingConfigEditor() {
             return
         }
         const classStudentIds = activeClass.studentIds;
-        var displayedStudentIds : string[] = []
+        var displayedStudentIds: string[] = []
         activeConfig.grid.map(row => {
             row.map(col => {
                 if (col.studentId != null) {
@@ -520,7 +521,7 @@ export default function SeatingConfigEditor() {
                 }
             })
         })
-        var missingStudentIds : string[] = classStudentIds.filter(x => !displayedStudentIds.includes(x));
+        var missingStudentIds: string[] = classStudentIds.filter(x => !displayedStudentIds.includes(x));
         var grid: FloorCell[][] = activeConfig.grid.map(row => row.map(cell => ({ ...cell })));
         for (let i = 0; i < activeConfig.rows; i++) {
             for (let j = 0; j < activeConfig.cols; j++) {
@@ -548,7 +549,7 @@ export default function SeatingConfigEditor() {
 
     }
 
-    const areStudentsMissing = () : boolean => {
+    const areStudentsMissing = (): boolean => {
         if (activeClass == undefined) {
             return false
         }
@@ -556,7 +557,7 @@ export default function SeatingConfigEditor() {
             return false
         }
         const classStudentIds = activeClass.studentIds;
-        var displayedStudentIds : string[] = []
+        var displayedStudentIds: string[] = []
         activeConfig.grid.map(row => {
             row.map(col => {
                 if (col.studentId != null) {
@@ -600,6 +601,45 @@ export default function SeatingConfigEditor() {
                                     })}
                                 </div>
                             ) : (null)}
+                            {activeConfig ? (
+                                <div className={studentViewEnabled ? 'classroom-floor-text-container-student-view' : 'classroom-floor-text-container'}
+                                    style={{
+                                        aspectRatio: `${activeConfig.cols} / ${activeConfig.rows}`,
+                                        width: studentViewEnabled
+                                            ? `800px`
+                                            : `${Math.min(90, 90 * activeConfig.cols / activeConfig.rows)}%`,
+                                        pointerEvents: canEditLabels ? `auto` : `none`
+                                    }}
+                                >
+                                    <div className="floor-text-input-container">
+                                        <input className={`floor-text-input left ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                    <div className="floor-text-input-container">
+                                        <input className={`floor-text-input ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                    <div className="floor-text-input-container">
+                                        <input className={`floor-text-input right ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                    <div className="floor-text-input-container center">
+                                        <input className={`floor-text-input left ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                    <div className="floor-spacer">
+                                        
+                                    </div>
+                                    <div className="floor-text-input-container center">
+                                        <input className={`floor-text-input right ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                    <div className="floor-text-input-container end">
+                                        <input className={`floor-text-input left ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                    <div className="floor-text-input-container end">
+                                        <input className={`floor-text-input ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                    <div className="floor-text-input-container end">
+                                        <input className={`floor-text-input right ${canEditLabels ? '' : 'hide'} ${studentViewEnabled ? 'student-view' : ''}`}></input>
+                                    </div>
+                                </div>
+                            ) : (null)}
                         </div>
                     </DragDropProvider>
                     <div className="config-editor-actions-panel">
@@ -608,6 +648,7 @@ export default function SeatingConfigEditor() {
                         <button onClick={onAddDesk} className="default-button">Add Desk</button>
                         {areStudentsMissing() && <button onClick={onAddMissingStudents} className="default-button">Add Missing Student(s)</button>}
                         <button onClick={openClassPrefsModal} className="default-button">Classroom Preferences</button>
+                        <button onClick={() => setCanEditLabels(!canEditLabels)} className="default-button">{canEditLabels ? 'Stop Editing Floor Labels' : 'Edit Floor Labels'}</button>
                     </div>
                     <ShufflePreferencesModal open={isModalOpen} onClose={onCloseShufflePreferencesModal}></ShufflePreferencesModal>
                     <Modal open={isClassPrefsModalOpen} onClose={onCloseClassPrefsModal}>
@@ -618,24 +659,24 @@ export default function SeatingConfigEditor() {
                             <div>
                                 <div className="new-student-attribute-row">
                                     <p>Floor Color</p>
-                                    <input type="color" value={activeClass.classPreferences.floorColor} onChange={(e) => updateClassPreferences({...activeClass.classPreferences, floorColor: e.target.value})}></input>
+                                    <input type="color" value={activeClass.classPreferences.floorColor} onChange={(e) => updateClassPreferences({ ...activeClass.classPreferences, floorColor: e.target.value })}></input>
                                 </div>
                                 <div className="new-student-attribute-row">
                                     <p>Student Names</p>
                                     <Select value={{ value: activeClass.classPreferences.nameDisplay, label: `${activeClass.classPreferences.nameDisplay}` }} options={[
-                                { value: NameDisplay.First, label: 'First' },
-                                { value: NameDisplay.FirstAndLast, label: 'First And Last' },
-                                { value: NameDisplay.Last, label: 'Last' },
-                                { value: NameDisplay.Abbreviated, label: 'Abbreviated' },
-                            ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
-                                value: NameDisplay;
-                                label: string;
-                            }>, actionMeta: ActionMeta<{
-                                value: NameDisplay;
-                                label: string;
-                            }>) => { updateClassPreferences({...activeClass.classPreferences, nameDisplay: newValue?.value || NameDisplay.First})  }} />
+                                        { value: NameDisplay.First, label: 'First' },
+                                        { value: NameDisplay.FirstAndLast, label: 'First And Last' },
+                                        { value: NameDisplay.Last, label: 'Last' },
+                                        { value: NameDisplay.Abbreviated, label: 'Abbreviated' },
+                                    ]} components={{ Option: CustomOption }} onChange={(newValue: SingleValue<{
+                                        value: NameDisplay;
+                                        label: string;
+                                    }>, actionMeta: ActionMeta<{
+                                        value: NameDisplay;
+                                        label: string;
+                                    }>) => { updateClassPreferences({ ...activeClass.classPreferences, nameDisplay: newValue?.value || NameDisplay.First }) }} />
                                 </div>
-                                
+
                             </div>
                             <div className="flex flex-row justify-center">
                                 <button onClick={onCloseClassPrefsModal} className="default-button">Close</button>
