@@ -1,6 +1,5 @@
 import "../styles/class-editor.css";
 import { useState } from "react";
-import { useActiveClass } from "../app-context";
 import ClassStudentList from "./class-student-list";
 import SeatingConfigEditor from "./seating-config-editor";
 import ClassRulesEditor from "./class-rules-editor";
@@ -8,10 +7,9 @@ import TagsEditor from "./tags-editor";
 import GroupsEditor from "./groups-editor";
 
 export default function ClassEditor() {
-    const activeClass = useActiveClass();
 
     const [selectedSidebarTab, setSelectedSidebarTab] = useState("Students")
-    const [selectedEditorTab, setSelectedEditorTab] = useState("Seating Chart")
+    const [selectedEditorTab, setSelectedEditorTab] = useState("Seating Charts")
 
     return (
         <div className="class-editor">
@@ -30,10 +28,10 @@ export default function ClassEditor() {
             </div>
             <div className="editors-container">
                 <div className="editors-tabs-container">
-                    <button onClick={() => setSelectedEditorTab("Seating Chart")} className={`sidebar-tab ${selectedEditorTab === "Seating Chart" ? "sidebar-tab-current" : ""}`}>Seating Chart</button>
+                    <button onClick={() => setSelectedEditorTab("Seating Charts")} className={`sidebar-tab ${selectedEditorTab === "Seating Charts" ? "sidebar-tab-current" : ""}`}>Seating Charts</button>
                     <button onClick={() => setSelectedEditorTab("Groups")} className={`sidebar-tab ${selectedEditorTab === "Groups" ? "sidebar-tab-current" : ""}`}>Groups</button>
                 </div>
-                {selectedEditorTab == "Seating Chart" && <SeatingConfigEditor></SeatingConfigEditor>}
+                {selectedEditorTab == "Seating Charts" && <SeatingConfigEditor></SeatingConfigEditor>}
                 {selectedEditorTab == "Groups" && <GroupsEditor></GroupsEditor>}
             </div>
             

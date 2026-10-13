@@ -1,12 +1,11 @@
 import "../styles/seating-config-list.css";
-import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
+import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
 import { CustomOption, FloorCell, SeatingConfiguration } from "../app-state"
 import { MouseEvent, useState } from "react"
 import { v4 as uuid } from 'uuid'
 import Modal from "./modal";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import { useToast } from "./toast-context";
-import { config } from "process";
 import Toggle from "./toggle";
 
 
@@ -77,21 +76,21 @@ export default function SeatingConfigList(
 
         if (configCreationInfo.name.trim() == '') {
             toast.open(
-                toast.toastError("Error", "Empty config name.")
+                toast.toastError("Error", "Empty seating chart name.")
             )
             return
         }
 
-        if (seatingConfigs.length >= 4) {
+        if (seatingConfigs.length >= 6) {
             toast.open(
-                toast.toastError("Error", "Config limit reached.")
+                toast.toastError("Error", "Seating chart limit reached.")
             )
             return
         }
 
         if (seatingConfigs.some(x => x.name.toLowerCase().trim() == configCreationInfo.name.toLowerCase().trim())) {
             toast.open(
-                toast.toastError("Error", "Duplicate config name.")
+                toast.toastError("Error", "Duplicate seating chart name.")
             )
             return
         }
@@ -355,9 +354,9 @@ export default function SeatingConfigList(
             return
         }
 
-        if (seatingConfigs.length >= 4) {
+        if (seatingConfigs.length >= 6) {
             toast.open(
-                toast.toastError("Error", "Config limit reached.")
+                toast.toastError("Error", "Seating chart limit reached.")
             )
             return
         }
@@ -368,7 +367,7 @@ export default function SeatingConfigList(
 
         if (seatingConfigs.some(x => x.name.toLowerCase().trim() == configCreationInfo.name.toLowerCase().trim())) {
             toast.open(
-                toast.toastError("Error", "Duplicate config name.")
+                toast.toastError("Error", "Duplicate seating chart name.")
             )
             return
         }
@@ -401,7 +400,7 @@ export default function SeatingConfigList(
         if (activeClass === undefined || selectedConfigId == "") {
             return
         }
-        if (confirm(`Are you sure you want to delete config '${allSeatingConfigs[selectedConfigId]?.name}'?`) == true) {
+        if (confirm(`Are you sure you want to delete seating chart '${allSeatingConfigs[selectedConfigId]?.name}'?`) == true) {
             dispatch({ type: 'REMOVE_SEATING_CONFIG', payload: { classId: activeClass.id, configId: selectedConfigId } });
             onCloseConfigUpdateModal()
         }
@@ -444,12 +443,12 @@ export default function SeatingConfigList(
                         </div>
                     )
                 })}
-                <button onClick={openCreationModal} className={`seating-config-button`}>Add Seating Config</button>
+                <button onClick={openCreationModal} className={`seating-config-button`}>New Seating Chart</button>
             </ul>
             <Modal open={isUpdateModalOpen} onClose={onCloseConfigUpdateModal}>
                 <div className="seating-config-edit-modal">
                     <div className="flex flex-row justify-center">
-                        <p className="title">Edit Config</p>
+                        <p className="title">Edit Seating Chart</p>
                     </div>
                     <div>
                         <p>Name</p>
@@ -465,7 +464,7 @@ export default function SeatingConfigList(
             <Modal open={isCreationModalOpen} onClose={onCloseCreationModal}>
                 <div className="seating-config-edit-modal">
                     <div className="flex flex-row justify-center">
-                        <p className="title">Create Config</p>
+                        <p className="title">Create Seating Chart</p>
                     </div>
                     <div className="seating-config-creation-modal-row">
                         <p>Name</p>
@@ -546,13 +545,6 @@ export default function SeatingConfigList(
                         </div>
                     }
 
-                    {/* {configCreationInfo.preset == 'Tables' && 
-                        <div className="seating-config-creation-modal-row">
-                            <p>Number Of Tables</p>
-                            <input type="range" min="2" max="8" value={configCreationInfo.numberOfTables} onChange={(e) => setConfigCreationInfo({ ...configCreationInfo, numberOfTables: parseInt(e.target.value) })} />
-                            <p>{configCreationInfo.numberOfTables}</p>
-                        </div>
-                    } */}
                     {configCreationInfo.preset == 'Tables' && 
                         <div className="seating-config-creation-modal-row">
                             <p>Desks Per Table</p>

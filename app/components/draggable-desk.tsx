@@ -1,7 +1,7 @@
 import "../styles/draggable-desk.css";
 import { useDraggable } from "@dnd-kit/react"
 import { MouseEvent } from "react";
-import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
+import { useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
 import { Tag } from "../app-state";
 
 export interface DraggableDeskProps {

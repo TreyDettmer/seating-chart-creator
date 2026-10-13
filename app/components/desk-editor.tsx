@@ -1,8 +1,8 @@
 import "../styles/desk-editor.css";
 import "../styles/modal.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { Tag, CustomOption, SelectOption, TagSelectOption, tagColorDot } from "../app-state";
-import Select, { ActionMeta, MultiValue, SingleValue, StylesConfig } from 'react-select'
+import { CustomOption, TagSelectOption, tagColorDot } from "../app-state";
+import Select, { ActionMeta, MultiValue, StylesConfig } from 'react-select'
 import Toggle from "./toggle";
 
 export default function DeskEditor() {

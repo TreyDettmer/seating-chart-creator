@@ -1,16 +1,12 @@
 import "../styles/group-editor.css";
 
-import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { Tag, CustomOption, SelectOption, TagSelectOption, tagColorDot, GroupsConfiguration, StudentGroup } from "../app-state";
-import Modal from "./modal";
-import { v4 as uuid } from 'uuid'
-import Select, { ActionMeta, MultiValue, SingleValue, StylesConfig } from 'react-select'
-import Toggle from "./toggle";
+import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
+import { CustomOption, TagSelectOption, tagColorDot, GroupsConfiguration, StudentGroup } from "../app-state";
+import Select, { ActionMeta, MultiValue, StylesConfig } from 'react-select'
 
 export default function GroupEditor() {
 
     const activeClass = useActiveClass();
-    const activeConfig = useActiveSeatingConfig()
     const dispatch = useAppDispatch();
     const { tags: allTags, groupsConfigurations: allGroupsConfigurations } = useAppState()
 

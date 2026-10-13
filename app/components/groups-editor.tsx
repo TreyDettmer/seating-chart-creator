@@ -1,7 +1,7 @@
 import "../styles/groups-editor.css";
-import { useMemo, useState, MouseEvent } from "react";
+import { useState, MouseEvent } from "react";
 import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
-import { GroupsConfiguration, Student, CustomOption, SelectNumberOption, StudentGroup, TagWithStudents, KeepApartGroup, KeepTogetherGroup, SelectOption } from "../app-state";
+import { GroupsConfiguration, Student, CustomOption, StudentGroup, TagWithStudents, KeepApartGroup, KeepTogetherGroup, SelectOption } from "../app-state";
 import { useToast } from "./toast-context";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import { DragDropProvider, DragEndEvent } from "@dnd-kit/react";
@@ -35,20 +35,20 @@ export default function GroupsEditor() {
     const groupsConfiguration: GroupsConfiguration | undefined = allGroupsConfigurations[activeClass.activeGroupsConfigurationId || ''];
 
     var groupSelectOptions: SelectOption[] = [
-        { value: 'co 2', label: '2 groups'},
-        { value: 'co 3', label: '3 groups'},
-        { value: 'co 4', label: '4 groups'},
-        { value: 'co 5', label: '5 groups'},
-        { value: 'co 6', label: '6 groups'},
-        { value: 'co 7', label: '7 groups'},
-        { value: 'co 8', label: '8 groups'},
-        { value: 'go 2', label: 'groups of 2'},
-        { value: 'go 3', label: 'groups of 3'},
-        { value: 'go 4', label: 'groups of 4'},
-        { value: 'go 5', label: 'groups of 5'},
-        { value: 'go 6', label: 'groups of 6'},
+        { value: 'co 2', label: '2 groups' },
+        { value: 'co 3', label: '3 groups' },
+        { value: 'co 4', label: '4 groups' },
+        { value: 'co 5', label: '5 groups' },
+        { value: 'co 6', label: '6 groups' },
+        { value: 'co 7', label: '7 groups' },
+        { value: 'co 8', label: '8 groups' },
+        { value: 'go 2', label: 'groups of 2' },
+        { value: 'go 3', label: 'groups of 3' },
+        { value: 'go 4', label: 'groups of 4' },
+        { value: 'go 5', label: 'groups of 5' },
+        { value: 'go 6', label: 'groups of 6' },
     ]
-    
+
 
     function onGenerateGroups() {
         if (activeClass == undefined) {
@@ -76,13 +76,13 @@ export default function GroupsEditor() {
                     }
                 )
             }
-            
+
             for (let i = 0; i < filteredStudents.length; i++) {
                 studentGroups[i % numberOfGroups].studentIds.push(filteredStudents[i].id);
             }
         } else {
             var groupsOf = parseInt(selectedGroupOption.replaceAll('go ', ''))
-            var currentGroupStudentIds : string[] = [];
+            var currentGroupStudentIds: string[] = [];
             var groupsAdded = 0;
             for (let i = 0; i < filteredStudents.length; i++) {
                 if (currentGroupStudentIds.length < groupsOf) {
@@ -112,9 +112,9 @@ export default function GroupsEditor() {
                 )
             }
         }
-        
 
-        
+
+
         var newGroupId = uuid()
         var newGroupsConfiguration: GroupsConfiguration = {
             id: newGroupId,
@@ -223,12 +223,12 @@ export default function GroupsEditor() {
         if (groupsConfiguration == undefined) {
             return
         }
-        
+
         const classStudentIds = activeClass.studentIds;
-        var displayedStudentIds : string[] = []
+        var displayedStudentIds: string[] = []
         groupsConfiguration.studentGroups.forEach(g => g.studentIds.forEach(id => displayedStudentIds.push(id)))
-        
-        var missingStudentIds : string[] = classStudentIds.filter(x => !displayedStudentIds.includes(x));
+
+        var missingStudentIds: string[] = classStudentIds.filter(x => !displayedStudentIds.includes(x));
 
         var newStudentGroups = [...groupsConfiguration.studentGroups]
         var i = 0;
@@ -237,21 +237,21 @@ export default function GroupsEditor() {
             newStudentGroups[i % newStudentGroups.length].studentIds.push(studentId)
             i++;
         }
-        dispatch({ type: 'EDIT_GROUPS_CONFIGURATION', payload: { updatedGroupsConfiguration: {...groupsConfiguration, studentGroups: newStudentGroups, selectedGroupId: null} } });
+        dispatch({ type: 'EDIT_GROUPS_CONFIGURATION', payload: { updatedGroupsConfiguration: { ...groupsConfiguration, studentGroups: newStudentGroups, selectedGroupId: null } } });
     }
 
-    const areStudentsMissing = () : boolean => {
+    const areStudentsMissing = (): boolean => {
         if (activeClass == undefined) {
             return false
         }
         if (groupsConfiguration == undefined) {
             return false
         }
-        
+
         const classStudentIds = activeClass.studentIds;
-        var displayedStudentIds : string[] = []
+        var displayedStudentIds: string[] = []
         groupsConfiguration.studentGroups.forEach(g => g.studentIds.forEach(id => displayedStudentIds.push(id)))
-        
+
         return classStudentIds.filter(x => !displayedStudentIds.includes(x)).length > 0;
     }
 
@@ -347,8 +347,8 @@ export default function GroupsEditor() {
         }
 
         const newStudentGroups: StudentGroup[] = studentGroups.map(group => ({
-        ...group,
-        studentIds: []
+            ...group,
+            studentIds: []
         }));
 
         const studentIds = Array.from(bestAssignment.keys());
@@ -527,7 +527,7 @@ export default function GroupsEditor() {
         setIsShufflePreferencesModalOpen(false);
     }
 
-    function onDeleteGroup(groupsConfigId : string, groupsConfigName : string) {
+    function onDeleteGroup(groupsConfigId: string, groupsConfigName: string) {
         if (confirm(`Are you sure you want to remove group configuration '${groupsConfigName}'?`) == true) {
             dispatch({ type: 'REMOVE_GROUPS_CONFIGURATION', payload: { groupsConfigId: groupsConfigId } });
         }
@@ -564,12 +564,13 @@ export default function GroupsEditor() {
                                 label: string;
                             }>) => { setSelectedGroupOption(newValue?.value || 'co 2') }}
                         />
-                        
+
                         {students.length > 0 && <button onClick={onGenerateGroups} className="default-button">Generate Groups</button>}
                     </div>
-                    <p className="existing-groups-header">
+                    {groupsConfigurations.length > 0 && <p className="existing-groups-header">
                         Existing Groups
                     </p>
+                    }
                     <ul className="existing-groups-container">
                         {groupsConfigurations.map(x => {
                             return (
@@ -593,47 +594,47 @@ export default function GroupsEditor() {
                         <button onClick={shuffleStudents} className={!studentViewEnabled ? `default-button` : 'default-button shuffle-button-student-view'}>Shuffle</button>
                         {areStudentsMissing() && <button onClick={onAddMissingStudents} className="default-button">Add Missing Student(s)</button>}
                     </div>
-                    <div className={ studentViewEnabled ? 'groups-grid-outer-student-view' : 'groups-grid-outer'}>
-                    <div className={ studentViewEnabled ? 'groups-grid-student-view' : 'groups-grid'}>
-                        <DragDropProvider
-                            onDragStart={() => { }}
-                            onDragMove={() => { }}
-                            onDragOver={() => { }}
-                            onDragEnd={onDragEnd}>
-                            {groupsConfiguration.studentGroups.map(x => {
-                                return (
-                                    <div className={studentViewEnabled ? 'student-group-student-view' : 'student-group'} key={x.id}>
-                                        <div className="student-group-header-container">
-                                            <p className="student-group-header">{x.name}</p>
-                                            {!studentViewEnabled && <button className="student-group-select-button" onClick={(e) => onGroupSelected(e, x.id)}>
-                                                <FiEdit2></FiEdit2>
-                                            </button>}
+                    <div className={studentViewEnabled ? 'groups-grid-outer-student-view' : 'groups-grid-outer'}>
+                        <div className={studentViewEnabled ? 'groups-grid-student-view' : 'groups-grid'}>
+                            <DragDropProvider
+                                onDragStart={() => { }}
+                                onDragMove={() => { }}
+                                onDragOver={() => { }}
+                                onDragEnd={onDragEnd}>
+                                {groupsConfiguration.studentGroups.map(x => {
+                                    return (
+                                        <div className={studentViewEnabled ? 'student-group-student-view' : 'student-group'} key={x.id}>
+                                            <div className="student-group-header-container">
+                                                <p className="student-group-header">{x.name}</p>
+                                                {!studentViewEnabled && <button className="student-group-select-button" onClick={(e) => onGroupSelected(e, x.id)}>
+                                                    <FiEdit2></FiEdit2>
+                                                </button>}
+                                            </div>
+                                            <ul className="w-full">
+                                                {x.studentIds.map(y => {
+                                                    return (
+                                                        <StudentGroupRow key={`slot-${y}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={y} id={`slot-${y}`}></StudentGroupRow>
+                                                    )
+                                                })}
+                                                <StudentGroupRow key={`slot-${x.id}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={null} id={`slot-${x.id}`}></StudentGroupRow>
+                                            </ul>
+                                            {!studentViewEnabled && <ul className="group-tag-marker-container">
+                                                {x.tagIds.map((tagId) => {
+                                                    return <li
+                                                        className="group-tag-marker"
+                                                        key={tagId}
+                                                        style={{
+                                                            backgroundColor: `${allTags[tagId].color}`
+                                                        }}
+                                                    ></li>
+                                                })}
+                                            </ul>}
                                         </div>
-                                        <ul className="w-full">
-                                            {x.studentIds.map(y => {
-                                                return (
-                                                    <StudentGroupRow key={`slot-${y}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={y} id={`slot-${y}`}></StudentGroupRow>
-                                                )
-                                            })}
-                                            <StudentGroupRow key={`slot-${x.id}`} groupsConfigurationId={groupsConfiguration.id} groupId={x.id} studentId={null} id={`slot-${x.id}`}></StudentGroupRow>
-                                        </ul>
-                                        {!studentViewEnabled && <ul className="group-tag-marker-container">
-                                            {x.tagIds.map((tagId) => {
-                                                return <li
-                                                    className="group-tag-marker"
-                                                    key={tagId}
-                                                    style={{
-                                                        backgroundColor: `${allTags[tagId].color}`
-                                                    }}
-                                                ></li>
-                                            })}
-                                        </ul>}
-                                    </div>
 
-                                )
-                            })}
-                        </DragDropProvider>
-                    </div>
+                                    )
+                                })}
+                            </DragDropProvider>
+                        </div>
                     </div>
                     <ShufflePreferencesModal open={isShufflePreferencesModalOpen} onClose={onCloseShufflePreferencesModal}></ShufflePreferencesModal>
                 </div>

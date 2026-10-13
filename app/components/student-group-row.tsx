@@ -1,7 +1,6 @@
 import "../styles/groups-editor.css";
 import { useDraggable, useDroppable } from "@dnd-kit/react"
 import { useActiveClass, useAppState } from "../app-context";
-import { v4 as uuid } from 'uuid'
 import { NameDisplay } from "../app-state";
 
 

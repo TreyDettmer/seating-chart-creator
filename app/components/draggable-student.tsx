@@ -1,7 +1,7 @@
 import "../styles/draggable-student.css";
 import { useDraggable } from "@dnd-kit/react"
 import { MouseEvent } from "react";
-import { useActiveClass, useAppDispatch, useAppState } from "../app-context"
+import { useActiveClass, useAppState } from "../app-context"
 import { Tag, Student, NameDisplay } from "../app-state";
 
 export interface DraggableStudentProps {
@@ -14,7 +14,6 @@ export default function DraggableStudentComponent(
 ) {
     const { ref, isDragging } = useDraggable({ id: props.id })
     const activeClass = useActiveClass();
-    const dispatch = useAppDispatch();
     const { students: allStudents, tags: allTags, studentViewEnabled  } = useAppState();
 
     if (activeClass == undefined) {

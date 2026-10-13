@@ -1,16 +1,14 @@
-import { FloorCell, Student } from "../app-state"
+import { FloorCell } from "../app-state"
 import { useDroppable } from "@dnd-kit/react"
 import DraggableDeskComponent from "./draggable-desk"
 import DraggableStudentComponent from "./draggable-student"
-import { useActiveClass, useActiveSeatingConfig, useAppDispatch } from "../app-context"
+import { useActiveSeatingConfig, useAppDispatch } from "../app-context"
 
 
 export default function FloorCellComponent(
     props: FloorCell
 ) {
-    const isDraggable: boolean = props.studentId != null
     const dispatch = useAppDispatch();
-    const activeClass = useActiveClass();
     const activeConfig = useActiveSeatingConfig()
     const { ref, isDropTarget } = useDroppable({ id: props.id })
 

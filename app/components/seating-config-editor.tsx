@@ -1,7 +1,7 @@
 import "../styles/seating-config-editor.css";
 import "../styles/modal.css";
 import { useActiveClass, useActiveSeatingConfig, useAppDispatch, useAppState } from "../app-context";
-import { ClassPreferences, CustomOption, FloorCell, KeepApartGroup, KeepTogetherGroup, NameDisplay, SeatingConfiguration, ShufflePreferences, ShuffleResult, Student, TagWithStudents } from "../app-state";
+import { ClassPreferences, CustomOption, FloorCell, KeepApartGroup, KeepTogetherGroup, NameDisplay, SeatingConfiguration, Student, TagWithStudents } from "../app-state";
 
 import SeatingConfigList from "./seating-config-list";
 import FloorCellComponent from "./floor-cell";

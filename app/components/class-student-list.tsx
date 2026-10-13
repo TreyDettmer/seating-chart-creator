@@ -1,5 +1,5 @@
 import "../styles/class-student-list.css";
-import { useActiveClass, useAppDispatch, useAppState, useStudent } from "../app-context";
+import { useActiveClass, useAppDispatch, useAppState } from "../app-context";
 import { LocalFile, parse, ParseResult } from 'papaparse'
 import { CustomOption, Gender, Student, StudentCsvRow, StudentListDisplayPrefs } from "../app-state";
 import { useState } from "react";
